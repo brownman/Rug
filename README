@@ -3,6 +3,19 @@ rapid game development by handling the boiler plate details under the hood and l
 fun stuff for the programmer.
 
 ============================
+        Dependencies
+============================
+
+In order to build Rug, you need a few dependencies:
+  - Ruby development headers
+  - SDL
+  - SDL_image
+
+In Ubuntu, you can install these with apt-get:
+
+  sudo apt-get install ruby-dev libsdl1.2-dev libsdl-image1.2-dev
+
+============================
         Installation
 ============================
 
@@ -14,3 +27,6 @@ To build:
 
     ruby extconf.rb
     make
+
+At the moment there are no pre-built versions of Rug for you to download. These will
+be made available as soon as possible.

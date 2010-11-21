@@ -50,7 +50,7 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
     SDL_Surface * target;
 
     if (targetLayer == Qnil){
-      targetLayer = mainWnd;
+      target = mainWnd;
     }else{
       RugLayer * layer;
       Data_Get_Struct(targetLayer, RugLayer, layer);

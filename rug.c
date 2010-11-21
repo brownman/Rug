@@ -13,7 +13,7 @@ VALUE loadFunc, drawFunc, updateFunc;
 
 VALUE mRug, mRugEvent;
 
-extern int width, height, bpp;
+extern _RugConf RugConf;
 
 static VALUE RugLoad(int argc, VALUE * argv, VALUE class){
   if (rb_block_given_p()){
@@ -46,19 +46,20 @@ static VALUE RugStart(VALUE class){
   SDL_Init(SDL_INIT_VIDEO);
   atexit(SDL_Quit);
 
-  mainWnd = SDL_SetVideoMode(width, height, bpp, SDL_HWSURFACE);
-
   SDL_Event ev;
   int lastDraw = 0;
-  int frameGap = 33;
 
-  DoConf();
+  int frameGap = RugConf.frameGap;
+
+  mainWnd = DoConf();
 
   if (loadFunc != Qnil){
     rb_funcall(loadFunc, rb_intern("call"), 0);
   }
 
+  // TODO: make background configurable
   Uint32 black = SDL_MapRGB(mainWnd->format, 0, 0, 0);
+
   while (1){
     if (SDL_PollEvent(&ev)){
       if (!HandleEvent(ev)){
@@ -68,14 +69,16 @@ static VALUE RugStart(VALUE class){
 
     int now = SDL_GetTicks();
     if (lastDraw + frameGap < now){
-      SDL_FillRect(mainWnd, NULL, black);
-
       // update
-      if (drawFunc != Qnil){
-        rb_funcall(drawFunc, rb_intern("call"), 0);
-      }
       if (updateFunc != Qnil){
         rb_funcall(updateFunc, rb_intern("call"), 1, INT2NUM(now - lastDraw));
+      }
+
+      // render
+      SDL_FillRect(mainWnd, NULL, black);
+
+      if (drawFunc != Qnil){
+        rb_funcall(drawFunc, rb_intern("call"), 0);
       }
       SDL_UpdateRect(mainWnd, 0, 0, 0, 0);
       lastDraw = now;
