@@ -1,0 +1,16 @@
+Rug is a basic gaming library for Ruby, based on Love2D for Lua. The goal is to promote
+rapid game development by handling the boiler plate details under the hood and leave the
+fun stuff for the programmer.
+
+============================
+        Installation
+============================
+
+At the moment only Linux has been tested, but the library should work on any system
+that supports both Ruby and SDL. You need the SDL libraries installed in order to 
+build Rug.
+
+To build:
+
+    ruby extconf.rb
+    make
