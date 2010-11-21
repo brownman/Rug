@@ -90,16 +90,24 @@ static VALUE RugStart(VALUE class){
   return Qnil;
 }
 
+VALUE RugShowCursor(VALUE class, VALUE show){
+  SDL_ShowCursor(TYPE(show) == T_TRUE);
+}
+
 void Init_Rug(){
   loadFunc = updateFunc = drawFunc = Qnil;
 
   // Main Rug module
   mRug = rb_define_module("Rug");
 
+  // main Rug actions
   rb_define_singleton_method(mRug, "load", RugLoad, -1);
   rb_define_singleton_method(mRug, "draw", RugDraw, -1);
   rb_define_singleton_method(mRug, "update", RugUpdate, -1);
   rb_define_singleton_method(mRug, "start", RugStart, -1);
+
+  // some basic options
+  rb_define_singleton_method(mRug, "show_cursor=", RugShowCursor, 1);
 
   // load additional classes/modules
   LoadConf(mRug);
