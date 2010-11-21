@@ -2,3 +2,4 @@ mkmf.log
 *.swp
 *.o
 Makefile
+pkg

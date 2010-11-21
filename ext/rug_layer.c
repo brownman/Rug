@@ -34,12 +34,14 @@ static VALUE RugDrawLayer(VALUE self){
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
   SDL_BlitSurface(rLayer->layer, NULL, mainWnd, NULL);
+  return Qnil;
 }
 
 static VALUE RugClearLayer(VALUE self){
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
   ClearLayer(rLayer);
+  return Qnil;
 }
 
 void LoadLayer(VALUE mRug){

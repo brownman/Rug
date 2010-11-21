@@ -10,31 +10,37 @@ static VALUE SetKeyUp(int argc, VALUE * argv, VALUE self){
   VALUE keyup;
   rb_scan_args(argc, argv, "0&", &keyup);
   RugEvents.KeyUp = keyup;
+  return Qnil;
 }
 static VALUE SetKeyDown(int argc, VALUE * argv, VALUE self){
   VALUE keydown;
   rb_scan_args(argc, argv, "0&", &keydown);
   RugEvents.KeyDown = keydown;
+  return Qnil;
 }
 static VALUE SetMouseMove(int argc, VALUE * argv, VALUE self){
   VALUE mousemove;
   rb_scan_args(argc, argv, "0&", &mousemove);
   RugEvents.MouseMove = mousemove;
+  return Qnil;
 }
 static VALUE SetMouseDown(int argc, VALUE * argv, VALUE self){
   VALUE mousedown;
   rb_scan_args(argc, argv, "0&", &mousedown);
   RugEvents.MouseDown = mousedown;
+  return Qnil;
 }
 static VALUE SetMouseUp(int argc, VALUE * argv, VALUE self){
   VALUE mouseup;
   rb_scan_args(argc, argv, "0&", &mouseup);
   RugEvents.MouseUp = mouseup;
+  return Qnil;
 }
 static VALUE SetMouseMoveOffset(int argc, VALUE * argv, VALUE self){
   VALUE func;
   rb_scan_args(argc, argv, "0&", &func);
   RugEvents.MouseMoveOffset = func;
+  return Qnil;
 }
 
 void LoadEvents(VALUE mRug){
