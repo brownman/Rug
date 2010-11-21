@@ -3,6 +3,30 @@ rapid game development by handling the boiler plate details under the hood and l
 fun stuff for the programmer.
 
 ============================
+        Installation
+============================
+
+Rug has been tested under Ubuntu Linux and Windows, both of these platforms work. You
+can get the binary versions from the Downloads section on github.
+
+You can also install the gem:
+
+    gem install Rug
+
+============================
+   Building from source
+============================
+
+To build:
+
+    cd ext
+    ruby extconf.rb
+    make
+
+At the moment there are no pre-built versions of Rug for you to download. These will
+be made available as soon as possible.
+
+============================
         Dependencies
 ============================
 
@@ -15,18 +39,3 @@ In Ubuntu, you can install these with apt-get:
 
   sudo apt-get install ruby-dev libsdl1.2-dev libsdl-image1.2-dev
 
-============================
-        Installation
-============================
-
-At the moment only Linux has been tested, but the library should work on any system
-that supports both Ruby and SDL. You need the SDL libraries installed in order to 
-build Rug.
-
-To build:
-
-    ruby extconf.rb
-    make
-
-At the moment there are no pre-built versions of Rug for you to download. These will
-be made available as soon as possible.
