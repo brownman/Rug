@@ -1,4 +1,5 @@
 #include "rug_resources.h"
+#include "rug_layer.h"
 
 #include <SDL/SDL_image.h>
 #include <stdlib.h>
@@ -37,14 +38,24 @@ static VALUE new_image(VALUE class, VALUE filename){
 
 static VALUE blit_image(int argc, VALUE * argv, VALUE self){
   if (mainWnd != NULL){
-    VALUE sx, sy, x, y, width, height;
+    VALUE sx, sy, x, y, width, height, targetLayer;
 
-    rb_scan_args(argc, argv, "24", &x, &y, &width, &height, &sx, &sy);
+    rb_scan_args(argc, argv, "25", &x, &y, &width, &height, &sx, &sy, &targetLayer);
     
     RugImage * image;
     Data_Get_Struct(self, RugImage, image);
 
     SDL_Rect src, dst;
+
+    SDL_Surface * target;
+
+    if (targetLayer == Qnil){
+      targetLayer = mainWnd;
+    }else{
+      RugLayer * layer;
+      Data_Get_Struct(targetLayer, RugLayer, layer);
+      target = layer->layer;
+    }
 
     dst.x = FIX2INT(x);
     dst.y = FIX2INT(y);
@@ -71,9 +82,9 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
         src.y = 0;
       }
 
-      SDL_BlitSurface(image->image, &src, mainWnd, &dst);
+      SDL_BlitSurface(image->image, &src, target, &dst);
     }else{
-      SDL_BlitSurface(image->image, NULL, mainWnd, &dst);
+      SDL_BlitSurface(image->image, NULL, target, &dst);
     }
   }
 

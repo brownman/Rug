@@ -102,5 +102,5 @@ void Init_Rug(){
   LoadConf(mRug);
   LoadEvents(mRug);
   LoadResourcesModule(mRug);
-  LoadLayers(mRug);
+  LoadLayer(mRug);
 }
