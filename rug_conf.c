@@ -76,7 +76,6 @@ SDL_Surface * DoConf(){
 }
 
 void LoadConf(VALUE mRug){
-  printf("%d %d\n", SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
   // Set some defaults
   RugConf.title          = Qnil;
   RugConf.width          = 800;
