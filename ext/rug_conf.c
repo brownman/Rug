@@ -35,7 +35,7 @@ VALUE RugConfSetInterval(VALUE self, VALUE _repeatInterval){
 }
 
 VALUE RugConfSetFullscreen(VALUE self, VALUE _fullscreen){
-  RugConf.fullscreen = (TYPE(_fullscreen) == T_TRUE ? 1 : 0);
+  RugConf.fullscreen = (_fullscreen == Qtrue ? 1 : 0);
   return _fullscreen;
 }
 

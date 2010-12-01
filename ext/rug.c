@@ -94,6 +94,10 @@ VALUE RugShowCursor(VALUE class, VALUE show){
   SDL_ShowCursor(TYPE(show) == T_TRUE);
 }
 
+VALUE RugGetTime(VALUE class){
+  return INT2FIX(SDL_GetTicks());
+}
+
 void Init_Rug(){
   loadFunc = updateFunc = drawFunc = Qnil;
 
@@ -108,6 +112,9 @@ void Init_Rug(){
 
   // some basic options
   rb_define_singleton_method(mRug, "show_cursor=", RugShowCursor, 1);
+
+  // global functions
+  rb_define_singleton_method(mRug, "get_time", RugGetTime, 0);
 
   // load additional classes/modules
   LoadConf(mRug);

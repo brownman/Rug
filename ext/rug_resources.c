@@ -36,11 +36,27 @@ static VALUE new_image(VALUE class, VALUE filename){
   return Qnil;
 }
 
+static VALUE get_image_width(VALUE self){
+  RugImage * image;
+  Data_Get_Struct(self, RugImage, image);
+  return INT2FIX(image->image->w);
+}
+static VALUE get_image_height(VALUE self){
+  RugImage * image;
+  Data_Get_Struct(self, RugImage, image);
+  return INT2FIX(image->image->h);
+}
+
 static VALUE blit_image(int argc, VALUE * argv, VALUE self){
   if (mainWnd != NULL){
     VALUE sx, sy, x, y, width, height, targetLayer;
 
     rb_scan_args(argc, argv, "25", &x, &y, &width, &height, &sx, &sy, &targetLayer);
+
+    if (TYPE(width) != T_FIXNUM && TYPE(width) != T_BIGNUM){
+      targetLayer = width;
+      width = Qnil;
+    }
     
     RugImage * image;
     Data_Get_Struct(self, RugImage, image);
@@ -100,5 +116,7 @@ void LoadResourcesModule(VALUE rugModule){
 
   rb_define_singleton_method(cRugImage, "new", new_image, 1);
   rb_define_method(cRugImage, "draw", blit_image, -1);
+  rb_define_method(cRugImage, "width", get_image_width, 0);
+  rb_define_method(cRugImage, "height", get_image_height, 0);
 }
 
