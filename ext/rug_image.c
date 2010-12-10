@@ -144,8 +144,9 @@ static VALUE flip_h_image(VALUE self){
 
   RugImage * newImage = ALLOC(RugImage);
 
+  SDL_PixelFormat * fmt = image->image->format;
   newImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE, image->image->w, image->image->h,
-      image->image->format->BitsPerPixel, 0, 0, 0, 0);
+      fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
   
   int x, y, i;
   if (image->image->format->BitsPerPixel == 32){
@@ -188,8 +189,9 @@ static VALUE flip_v_image(VALUE self){
 
   RugImage * newImage = ALLOC(RugImage);
 
+  SDL_PixelFormat * fmt = image->image->format;
   newImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE, image->image->w, image->image->h,
-      image->image->format->BitsPerPixel, 0, 0, 0, 0);
+      fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
   
   int x, y, i;
   if (image->image->format->BitsPerPixel == 32){

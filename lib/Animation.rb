@@ -3,9 +3,20 @@ class Animation
     attr_reader :image, :frame_width, :timing, :width, :height, :num_frames
     def initialize args = {}
       @image = args[:image]
-      @frame_width = args[:frame_width]
-      @timing = args[:timing]
-      @num_frames = @image.width / @frame_width
+      @num_frames = args[:num_frames] || @image.width / @image.height
+      @frame_width = @image.width / @num_frames
+      @timing = args[:timing] || 500
+
+      # allow support to just put an integer
+      if @timing.is_a? Integer
+        @timing = [@timing] * @num_frames
+      elsif @timing.size != @num_frames
+        @timing *= @num_frames / @timing.size
+
+        if @timing.size < @num_frames
+          @timing += @timing[0, @num_frames - @timing.size]
+        end
+      end
 
       @width = @image.width
       @height = @image.height
@@ -17,10 +28,10 @@ class Animation
     default = :idle
     animations.each do |name, data|
       img = Rug::Image.new data[:filename]
-      data[:frame_width] = 1 if data[:frame_width] == 0
+
       @framesets[name] = Frameset.new(
         :image => img,
-        :frame_width => data[:frame_width],
+        :num_frames => data[:num_frames],
         :timing => data[:timing]
       )
 
