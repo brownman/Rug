@@ -1,7 +1,7 @@
 #include "ruby.h"
 
 #include "rug_conf.h"
-#include "rug_resources.h"
+#include "rug_image.h"
 #include "rug_events.h"
 
 #include <SDL/SDL.h>
@@ -119,6 +119,6 @@ void Init_Rug(){
   // load additional classes/modules
   LoadConf(mRug);
   LoadEvents(mRug);
-  LoadResourcesModule(mRug);
+  LoadImageModule(mRug);
   LoadLayer(mRug);
 }
