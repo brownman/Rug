@@ -1,3 +1,4 @@
+#include "rug_defs.h"
 #include "rug_layer.h"
 
 VALUE cRugLayer;
@@ -5,7 +6,7 @@ VALUE cRugLayer;
 extern SDL_Surface * mainWnd;
 
 void ClearLayer(RugLayer * rLayer){
-  Uint32 clear = SDL_MapRGBA(rLayer->layer->format, 0, 0, 0, 0);
+  Uint32 clear = SDL_MapRGBA(rLayer->layer->format, 0, 0, 0, 255);
   SDL_FillRect(rLayer->layer, NULL, clear);
 }
 
@@ -15,24 +16,26 @@ static void unload_layer(void * vp){
   rLayer->layer = NULL;
 }
 
-static VALUE RugInit(int argc, VALUE * argv, VALUE class){
+/*
+ * Creates a layer. If _width_ and _height_ are included, the layer will
+ * have that size, otherwise it will have the same size as the window.
+ */
+static VALUE RugCreateLayer(int argc, VALUE * argv, VALUE class){
   if (mainWnd == NULL){
     return Qnil;
   }
 
   VALUE width, height;
+  int w, h;
   rb_scan_args(argc, argv, "02", &width, &height);
 
-  if (width == Qnil){
-    width = INT2FIX(mainWnd->w);
-  }
-  if (height == Qnil){
-    height = INT2FIX(mainWnd->h);
-  }
+  w = (width == Qnil) ? mainWnd->w : FIX2INT(width);
+  h = (height == Qnil) ? mainWnd->h : FIX2INT(height);
 
   RugLayer * rLayer = ALLOC(RugLayer);
 
-  rLayer->layer = SDL_CreateRGBSurface(SDL_HWSURFACE, width, height, mainWnd->format->BitsPerPixel, 0, 0, 0, 0);
+  rLayer->layer = SDL_CreateRGBSurface(SDL_HWSURFACE, w, h, 32,
+      RED_MASK, GREEN_MASK, BLUE_MASK, ALPHA_MASK);
 
   // make the surface transparent
   ClearLayer(rLayer);
@@ -40,15 +43,47 @@ static VALUE RugInit(int argc, VALUE * argv, VALUE class){
   return Data_Wrap_Struct(cRugLayer, NULL, unload_layer, rLayer);
 }
 
+/*
+ * Draws the layer. If a width and height are passed, then only a subsection
+ * of the layer will drawn, with width and height equal to the values passed.
+ * This subsection starts at (0, 0), unless the _sx_ and _sy_ parameters are
+ * also included.
+ * If a layer is passed, then the layer will be drawn on that layer, otherwise
+ * it will be drawn onto the screen.
+ *
+ * Usage:
+ *
+ * layer.draw                          # draws the layer at 0, 0
+ * layer.draw 10, 10                   # draws the layer at 10, 10 on the main window
+ * layer.draw 20, 20, 50, 50, 10, 10   # draws the section of the layer starting at 10, 10
+ *                                     # with width and height = 50 onto the main window
+ *                                     # at 20, 20
+ * layer.draw 10, 10, background_layer # draws the layer onto background_layer at 10, 10
+ */
 static VALUE RugDrawLayer(int argc, VALUE * argv, VALUE self){
-  VALUE x, y, width, height, sx, sy;
-  rb_scan_args(argc, argv, "06", &x, &y, &width, &height, &sx, &sy);
+  VALUE x, y, width, height, sx, sy, targetLayer;
+  rb_scan_args(argc, argv, "07", &x, &y, &width, &height, &sx, &sy, &targetLayer);
 
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
 
+  if (TYPE(width) != T_FIXNUM && TYPE(width) != T_BIGNUM){
+    targetLayer = width;
+    width = Qnil;
+  }
+
+  SDL_Surface * target;
+
+  if (targetLayer == Qnil){
+    target = mainWnd;
+  }else{
+    RugLayer * layer;
+    Data_Get_Struct(targetLayer, RugLayer, layer);
+    target = layer->layer;
+  }
+
   if (x == Qnil){
-    SDL_BlitSurface(rLayer->layer, NULL, mainWnd, NULL);
+    SDL_BlitSurface(rLayer->layer, NULL, target, NULL);
   }else{
     SDL_Rect dst, src;
 
@@ -62,14 +97,17 @@ static VALUE RugDrawLayer(int argc, VALUE * argv, VALUE self){
       src.w = FIX2INT(width);
       src.h = FIX2INT(height);
 
-      SDL_BlitSurface(rLayer->layer, &src, mainWnd, &dst);
+      SDL_BlitSurface(rLayer->layer, &src, target, &dst);
     }else{
-      SDL_BlitSurface(rLayer->layer, NULL, mainWnd, &dst);
+      SDL_BlitSurface(rLayer->layer, NULL, target, &dst);
     }
   }
   return Qnil;
 }
 
+/*
+ * Clears all the pixel data on the layer.
+ */
 static VALUE RugClearLayer(VALUE self){
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
@@ -77,23 +115,29 @@ static VALUE RugClearLayer(VALUE self){
   return Qnil;
 }
 
+/*
+ * Gets the width of the layer.
+ */
 static VALUE RugLayerWidth(VALUE self){
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
-  return rLayer->layer ? rLayer->layer->w : 0;
+  return INT2FIX(rLayer->layer ? rLayer->layer->w : 0);
 }
 
+/*
+ * Gets the height of the layer.
+ */
 static VALUE RugLayerHeight(VALUE self){
   RugLayer * rLayer;
   Data_Get_Struct(self, RugLayer, rLayer);
-  return rLayer->layer ? rLayer->layer->h : 0;
+  return INT2FIX(rLayer->layer ? rLayer->layer->h : 0);
 }
 
 void LoadLayer(VALUE mRug){
   // create conf class
   cRugLayer = rb_define_class_under(mRug, "Layer", rb_cObject);
 
-  rb_define_singleton_method(cRugLayer, "new", RugInit, -1);
+  rb_define_singleton_method(cRugLayer, "new", RugCreateLayer, -1);
   rb_define_method(cRugLayer, "draw",  RugDrawLayer,  -1);
   rb_define_method(cRugLayer, "clear", RugClearLayer, 0);
   rb_define_method(cRugLayer, "width", RugLayerWidth, 0);

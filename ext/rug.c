@@ -15,6 +15,11 @@ VALUE mRug, mRugEvent;
 
 extern _RugConf RugConf;
 
+/*
+ * Sets the Rug load function. This function is called once
+ * at the beginning of the program, before any updates or
+ * draws, but after the configuration block is loaded.
+ */
 static VALUE RugLoad(int argc, VALUE * argv, VALUE class){
   if (rb_block_given_p()){
     VALUE func;
@@ -24,6 +29,11 @@ static VALUE RugLoad(int argc, VALUE * argv, VALUE class){
   return Qnil;
 }
 
+/*
+ * Sets the Rug draw function. Requires a block to be passed with the
+ * code to be executed on each draw. This block does not have any
+ * arguments.
+ */
 static VALUE RugDraw(int argc, VALUE * argv, VALUE class){
   if (rb_block_given_p()){
     VALUE func;
@@ -33,6 +43,18 @@ static VALUE RugDraw(int argc, VALUE * argv, VALUE class){
   return Qnil;
 }
 
+/*
+ * Sets the Rug update function. Requires a block to be passed with the
+ * code to be executed on each update. The block must accept one argument
+ * which is the amount of time in milliseconds that has passed since the
+ * last update.
+ *
+ * Usage:
+ *
+ *    Rug.update do |dt|
+ *      # code for handling the update call
+ *    end
+ */
 static VALUE RugUpdate(int argc, VALUE * argv, VALUE class){
   if (rb_block_given_p()){
     VALUE func;
@@ -42,6 +64,9 @@ static VALUE RugUpdate(int argc, VALUE * argv, VALUE class){
   return Qnil;
 }
 
+/*
+ * Runs the application. This method will block until the program quits.
+ */
 static VALUE RugStart(VALUE class){
   SDL_Init(SDL_INIT_VIDEO);
   atexit(SDL_Quit);
@@ -90,10 +115,16 @@ static VALUE RugStart(VALUE class){
   return Qnil;
 }
 
+/*
+ * Shows/hides the cursor.
+ */
 VALUE RugShowCursor(VALUE class, VALUE show){
   SDL_ShowCursor(TYPE(show) == T_TRUE);
 }
 
+/*
+ * Gets the number of milliseconds passed since the program started.
+ */
 VALUE RugGetTime(VALUE class){
   return INT2FIX(SDL_GetTicks());
 }

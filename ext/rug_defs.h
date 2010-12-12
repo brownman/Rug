@@ -1,0 +1,9 @@
+#ifndef RUG_DEFS_H
+#define RUG_DEFS_H
+
+#define RED_MASK   0xFF000000
+#define GREEN_MASK 0x00FF0000
+#define BLUE_MASK  0x0000FF00
+#define ALPHA_MASK 0x000000FF
+
+#endif //RUG_DEFS_H

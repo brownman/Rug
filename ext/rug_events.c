@@ -6,36 +6,71 @@ struct {
   VALUE KeyUp, KeyDown, MouseMove, MouseDown, MouseUp, MouseMoveOffset;
 } RugEvents;
 
+/*
+ * Sets the function that will be called when a key is released. The
+ * block must accept one argument, which is the key as defined in the
+ * Rug::Key module.
+ */
 static VALUE SetKeyUp(int argc, VALUE * argv, VALUE self){
   VALUE keyup;
   rb_scan_args(argc, argv, "0&", &keyup);
   RugEvents.KeyUp = keyup;
   return Qnil;
 }
+
+/*
+ * Sets the function that will be called when a key is pushed down. The
+ * block must accept one argument, which is the key as defined in the
+ * Rug::Key module.
+ */
 static VALUE SetKeyDown(int argc, VALUE * argv, VALUE self){
   VALUE keydown;
   rb_scan_args(argc, argv, "0&", &keydown);
   RugEvents.KeyDown = keydown;
   return Qnil;
 }
+
+/*
+ * Sets the function that will be called when the mouse moves. The block
+ * must accept two parameters, which are the x and y locations of the
+ * new mouse position.
+ */
 static VALUE SetMouseMove(int argc, VALUE * argv, VALUE self){
   VALUE mousemove;
   rb_scan_args(argc, argv, "0&", &mousemove);
   RugEvents.MouseMove = mousemove;
   return Qnil;
 }
+
+/*
+ * Sets the function that will be called when a mouse button is pressed
+ * down. There are three parameters: the x and y location, and the button
+ * that was pressed (as defined in the Rug::Mouse module).
+ */
 static VALUE SetMouseDown(int argc, VALUE * argv, VALUE self){
   VALUE mousedown;
   rb_scan_args(argc, argv, "0&", &mousedown);
   RugEvents.MouseDown = mousedown;
   return Qnil;
 }
+
+/*
+ * Sets the function that will be called when a mouse button is released.
+ * There are three parameters: the x and y location, and the button that
+ * was pressed (as defined in the Rug::Mouse module).
+ */
 static VALUE SetMouseUp(int argc, VALUE * argv, VALUE self){
   VALUE mouseup;
   rb_scan_args(argc, argv, "0&", &mouseup);
   RugEvents.MouseUp = mouseup;
   return Qnil;
 }
+
+/*
+ * Sets the function that will be called when the mouse moves. The
+ * block must accept two parameters, which are the x and y offsets
+ * from the mouse's previous position.
+ */
 static VALUE SetMouseMoveOffset(int argc, VALUE * argv, VALUE self){
   VALUE func;
   rb_scan_args(argc, argv, "0&", &func);

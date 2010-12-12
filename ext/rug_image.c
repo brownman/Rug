@@ -1,3 +1,4 @@
+#include "rug_defs.h"
 #include "rug_image.h"
 #include "rug_layer.h"
 
@@ -12,24 +13,60 @@ extern SDL_Surface * mainWnd;
 
 typedef struct {
   SDL_Surface * image;
+  Uint32 foreColour, backColour;
 } RugImage;
 
 static void unload_image(void * vp){
   RugImage * rImage = (RugImage *)vp;
-  SDL_FreeSurface(rImage->image);
+  if (rImage->image != NULL){
+    SDL_FreeSurface(rImage->image);
+  }
   rImage->image = NULL;
+  free(rImage);
 }
 
-static VALUE new_image(VALUE class, VALUE filename){
-  SDL_Surface * image = IMG_Load(STR2CSTR(filename));
+/*
+ * Two version:
+ *   Image.new(_filename_)
+ *   Image.new(_width_, _height_)
+ *
+ * The first loads the image from a file, the second creates a blank
+ * image with a specified width and height.
+ */
+static VALUE new_image(int argc, VALUE * argv, VALUE class){
+  VALUE filename, width, height;
 
-  if (!image){
-    // throw exception
-    rb_raise(rb_eIOError, "Unable to load image!");
+  rb_scan_args(argc, argv, "11", &filename, &height);
+
+  if (height == Qnil){
+    SDL_Surface * image = IMG_Load(STR2CSTR(filename));
+
+    if (!image){
+      // throw exception
+      rb_raise(rb_eIOError, "Unable to load image!");
+    }else{
+      RugImage * rImage = ALLOC(RugImage);
+
+      rImage->image = image;
+      rImage->foreColour = SDL_MapRGB(image->format, 0, 0, 0);
+      rImage->backColour = SDL_MapRGB(image->format, 255, 255, 255);
+
+      return Data_Wrap_Struct(cRugImage, NULL, unload_image, rImage);
+    }
   }else{
+    // filename contains the width
+    int w, h;
+
+    w = FIX2INT(filename);
+    h = FIX2INT(height);
+
     RugImage * rImage = ALLOC(RugImage);
 
-    rImage->image = image;
+    rImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE, w, h, 32,
+        RED_MASK, GREEN_MASK, BLUE_MASK, ALPHA_MASK);
+
+    Uint32 clear = SDL_MapRGBA(rImage->image->format, 0, 0, 0, 0);
+    SDL_FillRect(rImage->image, NULL, clear);
 
     return Data_Wrap_Struct(cRugImage, NULL, unload_image, rImage);
   }
@@ -37,23 +74,47 @@ static VALUE new_image(VALUE class, VALUE filename){
   return Qnil;
 }
 
+/*
+ * Gets the width of the image in pixels.
+ */
 static VALUE get_image_width(VALUE self){
   RugImage * image;
   Data_Get_Struct(self, RugImage, image);
   return INT2FIX(image->image->w);
 }
+
+/*
+ * Gets the height of the image in pixels.
+ */
 static VALUE get_image_height(VALUE self){
   RugImage * image;
   Data_Get_Struct(self, RugImage, image);
   return INT2FIX(image->image->h);
 }
 
+/*
+ * Draws the image at _x_, _y_. If a width and height are passed, then only
+ * a subsection of the image will drawn, with width and height equal to the
+ * values passed. This subsection starts at (0, 0), unless the _sx_ and _sy_
+ * parameters are also included.
+ * If a layer is passed, then the image will be drawn on the layer, otherwise
+ * it will be drawn onto the screen.
+ *
+ * Usage:
+ *
+ * image.draw 10, 10                   # draws the image at 10, 10 on the main window
+ * image.draw 20, 20, 50, 50, 10, 10   # draws the section of the image starting at 10, 10
+ *                                     # with width and height = 50 onto the main window
+ *                                     # at 20, 20
+ * image.draw 10, 10, background_layer # draws the image onto background_layer at 10, 10
+ */
 static VALUE blit_image(int argc, VALUE * argv, VALUE self){
   if (mainWnd != NULL){
     VALUE sx, sy, x, y, width, height, targetLayer;
 
     rb_scan_args(argc, argv, "25", &x, &y, &width, &height, &sx, &sy, &targetLayer);
 
+    // if the width is not a number, assume it is a layer
     if (TYPE(width) != T_FIXNUM && TYPE(width) != T_BIGNUM){
       targetLayer = width;
       width = Qnil;
@@ -81,23 +142,10 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
     if (width != Qnil){
       src.w = FIX2INT(width);
 
-      if (height != Qnil){
-        src.h = FIX2INT(height);
-      }else{
-        src.h = src.w;
-      }
+      src.h = (height != Qnil) ? FIX2INT(height) : src.w;
 
-      if (x != Qnil){
-        src.x = FIX2INT(sx);
-      }else{
-        src.x = 0;
-      }
-
-      if (y != Qnil){
-        src.y = FIX2INT(sy);
-      }else{
-        src.y = 0;
-      }
+      src.x = (sx != Qnil) ? FIX2INT(sx) : 0;
+      src.y = (sy != Qnil) ? FIX2INT(sy) : 0;
 
       SDL_BlitSurface(image->image, &src, target, &dst);
     }else{
@@ -108,6 +156,10 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
   return self;
 }
 
+/*
+ * Rotates an image by _degrees_ degrees. This method does not
+ * affect the image itself, but returns a new image.
+ */
 static VALUE rotate_image(VALUE self, VALUE degrees){
   RugImage * image;
   Data_Get_Struct(self, RugImage, image);
@@ -119,6 +171,29 @@ static VALUE rotate_image(VALUE self, VALUE degrees){
   return Data_Wrap_Struct(cRugImage, NULL, unload_image, rotated);
 }
 
+/*
+ * Rotates an image destructively: the current image is replaced by the
+ * rotated version.
+ */
+static VALUE rotate_image_d(VALUE self, VALUE degrees){
+  VALUE res = rotate_image(self, degrees);
+
+  RugImage *image, *newImage;
+  Data_Get_Struct(self, RugImage, image);
+  Data_Get_Struct(res, RugImage, newImage);
+
+  SDL_FreeSurface(image->image);
+  image->image = newImage->image;
+  newImage->image = NULL;
+
+  return Qnil;
+}
+
+/*
+ * Scales an image. If _sy_ is included then the height will be scaled
+ * by _sy_, otherwise both the height and width will be scaled by _sx_.
+ * The new scaled image is returned.
+ */
 static VALUE scale_image(int argc, VALUE * argv, VALUE self){
   VALUE sx, sy;
 
@@ -138,6 +213,27 @@ static VALUE scale_image(int argc, VALUE * argv, VALUE self){
   return Data_Wrap_Struct(cRugImage, NULL, unload_image, scaled);
 }
 
+/*
+ * Scales an image destructively: the current image is replaced by the
+ * scaled version.
+ */
+static VALUE scale_image_d(int argc, VALUE * argv, VALUE self){
+  VALUE res = scale_image(argc, argv, self);
+
+  RugImage *image, *newImage;
+  Data_Get_Struct(self, RugImage, image);
+  Data_Get_Struct(res, RugImage, newImage);
+
+  SDL_FreeSurface(image->image);
+  image->image = newImage->image;
+  newImage->image = NULL;
+
+  return Qnil;
+}
+
+/*
+ * Flips an image horizontally. The flipped image is returned.
+ */
 static VALUE flip_h_image(VALUE self){
   RugImage * image;
   Data_Get_Struct(self, RugImage, image);
@@ -171,7 +267,7 @@ static VALUE flip_h_image(VALUE self){
     for (x = 0; x < image->image->w; x++){
       for (y = 0; y < image->image->h; y++){
         for (i = 0; i < 3; i++){
-          dst[3 * x + y * image->image->w * 3 + i] = src[(image->image->w - x - 1) * 3 + y * image->image->w * 3 + (2 - i)];
+          dst[3 * x + y * image->image->w * 3 + i] = src[(image->image->w - x - 1) * 3 + y * image->image->w * 3 + i];
         }
       }
     }
@@ -183,6 +279,9 @@ static VALUE flip_h_image(VALUE self){
   return Data_Wrap_Struct(cRugImage, NULL, unload_image, newImage);
 }
 
+/*
+ * Flips an image vertically. The flipped image is returned.
+ */
 static VALUE flip_v_image(VALUE self){
   RugImage * image;
   Data_Get_Struct(self, RugImage, image);
@@ -216,17 +315,166 @@ static VALUE flip_v_image(VALUE self){
     for (x = 0; x < image->image->w; x++){
       for (y = 0; y < image->image->h; y++){
         for (i = 0; i < 3; i++){
-          dst[3 * x + y * image->image->w * 3 + i] = src[3 * x + (image->image->h - y - 1) * image->image->w * 3 + (2 - i)];
+          dst[3 * x + y * image->image->w * 3 + i] = src[3 * x + (image->image->h - y - 1) * image->image->w * 3 + i];
         }
       }
     }
   }else{
     // TODO: this, if necessary
-    printf("bit width: %d\n", image->image->format->BitsPerPixel);
   }
   SDL_UpdateRect(newImage->image, 0, 0, 0, 0);
 
   return Data_Wrap_Struct(cRugImage, NULL, unload_image, newImage);
+}
+
+/*
+ * Flips an image horizontally: the current image is replaced by the
+ * rotated version.
+ */
+static VALUE flip_h_image_d(VALUE self){
+  VALUE res = flip_h_image(self);
+
+  RugImage *image, *newImage;
+  Data_Get_Struct(self, RugImage, image);
+  Data_Get_Struct(res, RugImage, newImage);
+
+  SDL_FreeSurface(image->image);
+  image->image = newImage->image;
+  newImage->image = NULL;
+
+  return Qnil;
+}
+
+/*
+ * Flips an image vertically: the current image is replaced by the
+ * rotated version.
+ */
+static VALUE flip_v_image_d(VALUE self){
+  VALUE res = flip_v_image(self);
+
+  RugImage *image, *newImage;
+  Data_Get_Struct(self, RugImage, image);
+  Data_Get_Struct(res, RugImage, newImage);
+
+  SDL_FreeSurface(image->image);
+  image->image = newImage->image;
+  newImage->image = NULL;
+
+  return Qnil;
+}
+
+/*
+ * Sets the foreground colour of the image.
+ */
+static VALUE set_fore_colour(VALUE self, VALUE colour){
+  Uint8 r = FIX2INT(rb_iv_get(colour, "@r"));
+  Uint8 g = FIX2INT(rb_iv_get(colour, "@g"));
+  Uint8 b = FIX2INT(rb_iv_get(colour, "@b"));
+  Uint8 a = FIX2INT(rb_iv_get(colour, "@a"));
+
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  image->foreColour = SDL_MapRGBA(image->image->format, r, g, b, a);
+
+  return colour;
+}
+
+/*
+ * Sets the background colour of the image.
+ */
+static VALUE set_back_colour(VALUE self, VALUE colour){
+  Uint8 r = FIX2INT(rb_iv_get(colour, "@r"));
+  Uint8 g = FIX2INT(rb_iv_get(colour, "@g"));
+  Uint8 b = FIX2INT(rb_iv_get(colour, "@b"));
+  Uint8 a = FIX2INT(rb_iv_get(colour, "@a"));
+
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  image->backColour = SDL_MapRGBA(image->image->format, r, g, b, a);
+
+  return colour;
+}
+
+/*
+ * Draws a slice of pie on the image using the current foreground
+ * colour. The pie is not filled in.
+ *
+ * _x_:     The x location of the centre of the pie.
+ * _y_:     The y location of the centre of the pie.
+ * _rad_:   The radius of the pie.
+ * _start_: The starting angle of the pie (degrees).
+ * _end_:   The starting angle of the pie (degrees).
+ */
+static VALUE image_draw_pie(VALUE self, VALUE x, VALUE y, VALUE rad, VALUE start, VALUE end){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  // do a transformation since SDL_gfx has a weird system
+  int angle_s = 360 - FIX2INT(end);
+  int angle_e = 360 - FIX2INT(start);
+
+  pieColor(image->image, FIX2INT(x), FIX2INT(y), FIX2INT(rad), angle_s, angle_e, image->foreColour);
+
+  return Qnil;
+}
+
+/*
+ * Draws a slice of pie on the image using the current background
+ * colour. The pie is filled in.
+ *
+ * _x_:     The x location of the centre of the pie.
+ * _y_:     The y location of the centre of the pie.
+ * _rad_:   The radius of the pie.
+ * _start_: The starting angle of the pie (degrees).
+ * _end_:   The starting angle of the pie (degrees).
+ */
+static VALUE image_fill_pie(VALUE self, VALUE x, VALUE y, VALUE rad, VALUE start, VALUE end){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  // do a transformation since SDL_gfx has a weird system
+  int angle_s = 360 - FIX2INT(end);
+  int angle_e = 360 - FIX2INT(start);
+
+  filledPieColor(image->image, FIX2INT(x), FIX2INT(y), FIX2INT(rad), angle_s, angle_e, image->backColour);
+
+  return Qnil;
+}
+
+/*
+ * Draws a non-filled rectangle using the current foreground colour.
+ *
+ * _l_: The left side of the rectangle.
+ * _t_: The top of the rectangle.
+ * _r_: The right side of the rectangle.
+ * _b_: The bottom of the rectangle.
+ */
+static VALUE image_draw_rect(VALUE self, VALUE l, VALUE t, VALUE r, VALUE b){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  rectangleColor(image->image, FIX2INT(l), FIX2INT(t), FIX2INT(r), FIX2INT(b), image->foreColour);
+
+  return Qnil;
+}
+
+/*
+ * Draws a filled rectangle using the current background colour.
+ *
+ * _l_: The left side of the rectangle.
+ * _t_: The top of the rectangle.
+ * _r_: The right side of the rectangle.
+ * _b_: The bottom of the rectangle.
+ */
+static VALUE image_fill_rect(VALUE self, VALUE l, VALUE t, VALUE r, VALUE b){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  boxColor(image->image, FIX2INT(l), FIX2INT(t), FIX2INT(r), FIX2INT(b), image->backColour);
+
+  return Qnil;
 }
 
 void LoadImageModule(VALUE rugModule){
@@ -234,16 +482,33 @@ void LoadImageModule(VALUE rugModule){
   atexit(IMG_Quit);
 
   // define Image class
+  //}
   cRugImage = rb_define_class_under(rugModule, "Image", rb_cObject);
 
-  rb_define_singleton_method(cRugImage, "new", new_image, 1);
+  rb_define_singleton_method(cRugImage, "new", new_image, -1);
   rb_define_method(cRugImage, "draw", blit_image, -1);
   rb_define_method(cRugImage, "width", get_image_width, 0);
   rb_define_method(cRugImage, "height", get_image_height, 0);
+
+  rb_define_method(cRugImage, "fore_colour=", set_fore_colour, 1);
+  rb_define_method(cRugImage, "back_colour=", set_back_colour, 1);
+  rb_define_method(cRugImage, "fore_color=", set_fore_colour, 1);
+  rb_define_method(cRugImage, "back_color=", set_back_colour, 1);
 
   rb_define_method(cRugImage, "rotate", rotate_image, 1);
   rb_define_method(cRugImage, "scale", scale_image, -1);
   rb_define_method(cRugImage, "flip_h", flip_h_image, 0);
   rb_define_method(cRugImage, "flip_v", flip_v_image, 0);
+
+  rb_define_method(cRugImage, "rotate!", rotate_image_d, 1);
+  rb_define_method(cRugImage, "scale!",  scale_image_d, -1);
+  rb_define_method(cRugImage, "flip_h!", flip_h_image_d, 0);
+  rb_define_method(cRugImage, "flip_v!", flip_v_image_d, 0);
+
+  // TODO: Add in circles
+  rb_define_method(cRugImage, "draw_rect", image_draw_rect, 4);
+  rb_define_method(cRugImage, "fill_rect", image_fill_rect, 4);
+  rb_define_method(cRugImage, "draw_pie", image_draw_pie, 5);
+  rb_define_method(cRugImage, "fill_pie", image_fill_pie, 5);
 }
 
