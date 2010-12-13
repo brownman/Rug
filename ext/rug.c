@@ -152,4 +152,5 @@ void Init_Rug(){
   LoadEvents(mRug);
   LoadImageModule(mRug);
   LoadLayer(mRug);
+  LoadPhysicsModule(mRug);
 }

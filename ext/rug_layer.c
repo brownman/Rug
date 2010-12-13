@@ -6,7 +6,7 @@ VALUE cRugLayer;
 extern SDL_Surface * mainWnd;
 
 void ClearLayer(RugLayer * rLayer){
-  Uint32 clear = SDL_MapRGBA(rLayer->layer->format, 0, 0, 0, 255);
+  Uint32 clear = SDL_MapRGBA(rLayer->layer->format, 0, 0, 0, 0);
   SDL_FillRect(rLayer->layer, NULL, clear);
 }
 

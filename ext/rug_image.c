@@ -62,7 +62,8 @@ static VALUE new_image(int argc, VALUE * argv, VALUE class){
 
     RugImage * rImage = ALLOC(RugImage);
 
-    rImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE, w, h, 32,
+    rImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE | SDL_SRCALPHA | SDL_SRCCOLORKEY,
+        w, h, 32,
         RED_MASK, GREEN_MASK, BLUE_MASK, ALPHA_MASK);
 
     Uint32 clear = SDL_MapRGBA(rImage->image->format, 0, 0, 0, 0);
@@ -147,9 +148,9 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
       src.x = (sx != Qnil) ? FIX2INT(sx) : 0;
       src.y = (sy != Qnil) ? FIX2INT(sy) : 0;
 
-      SDL_BlitSurface(image->image, &src, target, &dst);
+      SDL_gfxBlitRGBA(image->image, &src, target, &dst);
     }else{
-      SDL_BlitSurface(image->image, NULL, target, &dst);
+      SDL_gfxBlitRGBA(image->image, NULL, target, &dst);
     }
   }
 
