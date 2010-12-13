@@ -4,6 +4,8 @@
 
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_rotozoom.h>
+#include <SDL/SDL_gfxBlitFunc.h>
+#include <SDL/SDL_gfxPrimitives.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,7 +35,7 @@ static void unload_image(void * vp){
  * The first loads the image from a file, the second creates a blank
  * image with a specified width and height.
  */
-static VALUE new_image(int argc, VALUE * argv, VALUE class){
+static VALUE new_image(int argc, VALUE * argv, VALUE klass){
   VALUE filename, width, height;
 
   rb_scan_args(argc, argv, "11", &filename, &height);
@@ -486,30 +488,30 @@ void LoadImageModule(VALUE rugModule){
   //}
   cRugImage = rb_define_class_under(rugModule, "Image", rb_cObject);
 
-  rb_define_singleton_method(cRugImage, "new", new_image, -1);
-  rb_define_method(cRugImage, "draw", blit_image, -1);
-  rb_define_method(cRugImage, "width", get_image_width, 0);
-  rb_define_method(cRugImage, "height", get_image_height, 0);
+  rb_define_singleton_method(cRugImage, "new", (VALUE (*)(...))new_image, -1);
+  rb_define_method(cRugImage, "draw", (VALUE (*)(...))blit_image, -1);
+  rb_define_method(cRugImage, "width", (VALUE (*)(...))get_image_width, 0);
+  rb_define_method(cRugImage, "height", (VALUE (*)(...))get_image_height, 0);
 
-  rb_define_method(cRugImage, "fore_colour=", set_fore_colour, 1);
-  rb_define_method(cRugImage, "back_colour=", set_back_colour, 1);
-  rb_define_method(cRugImage, "fore_color=", set_fore_colour, 1);
-  rb_define_method(cRugImage, "back_color=", set_back_colour, 1);
+  rb_define_method(cRugImage, "fore_colour=", (VALUE (*)(...))set_fore_colour, 1);
+  rb_define_method(cRugImage, "back_colour=", (VALUE (*)(...))set_back_colour, 1);
+  rb_define_method(cRugImage, "fore_color=", (VALUE (*)(...))set_fore_colour, 1);
+  rb_define_method(cRugImage, "back_color=", (VALUE (*)(...))set_back_colour, 1);
 
-  rb_define_method(cRugImage, "rotate", rotate_image, 1);
-  rb_define_method(cRugImage, "scale", scale_image, -1);
-  rb_define_method(cRugImage, "flip_h", flip_h_image, 0);
-  rb_define_method(cRugImage, "flip_v", flip_v_image, 0);
+  rb_define_method(cRugImage, "rotate", (VALUE (*)(...))rotate_image, 1);
+  rb_define_method(cRugImage, "scale", (VALUE (*)(...))scale_image, -1);
+  rb_define_method(cRugImage, "flip_h", (VALUE (*)(...))flip_h_image, 0);
+  rb_define_method(cRugImage, "flip_v", (VALUE (*)(...))flip_v_image, 0);
 
-  rb_define_method(cRugImage, "rotate!", rotate_image_d, 1);
-  rb_define_method(cRugImage, "scale!",  scale_image_d, -1);
-  rb_define_method(cRugImage, "flip_h!", flip_h_image_d, 0);
-  rb_define_method(cRugImage, "flip_v!", flip_v_image_d, 0);
+  rb_define_method(cRugImage, "rotate!", (VALUE (*)(...))rotate_image_d, 1);
+  rb_define_method(cRugImage, "scale!",  (VALUE (*)(...))scale_image_d, -1);
+  rb_define_method(cRugImage, "flip_h!", (VALUE (*)(...))flip_h_image_d, 0);
+  rb_define_method(cRugImage, "flip_v!", (VALUE (*)(...))flip_v_image_d, 0);
 
   // TODO: Add in circles
-  rb_define_method(cRugImage, "draw_rect", image_draw_rect, 4);
-  rb_define_method(cRugImage, "fill_rect", image_fill_rect, 4);
-  rb_define_method(cRugImage, "draw_pie", image_draw_pie, 5);
-  rb_define_method(cRugImage, "fill_pie", image_fill_pie, 5);
+  rb_define_method(cRugImage, "draw_rect", (VALUE (*)(...))image_draw_rect, 4);
+  rb_define_method(cRugImage, "fill_rect", (VALUE (*)(...))image_fill_rect, 4);
+  rb_define_method(cRugImage, "draw_pie", (VALUE (*)(...))image_draw_pie, 5);
+  rb_define_method(cRugImage, "fill_pie", (VALUE (*)(...))image_fill_pie, 5);
 }
 

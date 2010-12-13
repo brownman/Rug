@@ -81,7 +81,7 @@ VALUE RugConfSetFPS(VALUE self, VALUE _fps){
  * block is executed within the context of a Rug::Conf object.
  * This block ist
  */
-static VALUE RugConfFunc(int argc, VALUE * argv, VALUE class){
+static VALUE RugConfFunc(int argc, VALUE * argv, VALUE klass){
   // we keep track of the RugConf block and instance_eval it within
   // a RugConf object
   if (rb_block_given_p()){
@@ -125,17 +125,17 @@ void LoadConf(VALUE mRug){
 
   block_converter = rb_eval_string("proc { |recv, msg, block| recv.send(msg, &block) }");
   // add to main module
-  rb_define_singleton_method(mRug, "conf", RugConfFunc, -1);
+  rb_define_singleton_method(mRug, "conf", (VALUE (*)(...))RugConfFunc, -1);
   
   // create conf class
   cRugConf = rb_define_class_under(mRug, "Conf", rb_cObject);
 
-  rb_define_method(cRugConf, "width",               RugConfSetWidth, 1);
-  rb_define_method(cRugConf, "height",              RugConfSetHeight, 1);
-  rb_define_method(cRugConf, "bpp",                 RugConfSetBpp, 1);
-  rb_define_method(cRugConf, "title",               RugConfSetTitle, 1);
-  rb_define_method(cRugConf, "fps",                 RugConfSetFPS, 1);
-  rb_define_method(cRugConf, "fullscreen",          RugConfSetFullscreen, 1);
-  rb_define_method(cRugConf, "key_repeat_delay",    RugConfSetDelay, 1);
-  rb_define_method(cRugConf, "key_repeat_interval", RugConfSetInterval, 1);
+  rb_define_method(cRugConf, "width",               (VALUE (*)(...))RugConfSetWidth, 1);
+  rb_define_method(cRugConf, "height",              (VALUE (*)(...))RugConfSetHeight, 1);
+  rb_define_method(cRugConf, "bpp",                 (VALUE (*)(...))RugConfSetBpp, 1);
+  rb_define_method(cRugConf, "title",               (VALUE (*)(...))RugConfSetTitle, 1);
+  rb_define_method(cRugConf, "fps",                 (VALUE (*)(...))RugConfSetFPS, 1);
+  rb_define_method(cRugConf, "fullscreen",          (VALUE (*)(...))RugConfSetFullscreen, 1);
+  rb_define_method(cRugConf, "key_repeat_delay",    (VALUE (*)(...))RugConfSetDelay, 1);
+  rb_define_method(cRugConf, "key_repeat_interval", (VALUE (*)(...))RugConfSetInterval, 1);
 }

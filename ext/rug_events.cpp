@@ -79,12 +79,12 @@ static VALUE SetMouseMoveOffset(int argc, VALUE * argv, VALUE self){
 }
 
 void LoadEvents(VALUE mRug){
-  rb_define_singleton_method(mRug, "keyup",           SetKeyUp,           -1);
-  rb_define_singleton_method(mRug, "keydown",         SetKeyDown,         -1);
-  rb_define_singleton_method(mRug, "mousemove",       SetMouseMove,       -1);
-  rb_define_singleton_method(mRug, "mousemoveoffset", SetMouseMoveOffset, -1);
-  rb_define_singleton_method(mRug, "mousedown",       SetMouseDown,       -1);
-  rb_define_singleton_method(mRug, "mouseup",         SetMouseUp,         -1);
+  rb_define_singleton_method(mRug, "keyup",           (VALUE (*)(...))SetKeyUp,           -1);
+  rb_define_singleton_method(mRug, "keydown",         (VALUE (*)(...))SetKeyDown,         -1);
+  rb_define_singleton_method(mRug, "mousemove",       (VALUE (*)(...))SetMouseMove,       -1);
+  rb_define_singleton_method(mRug, "mousemoveoffset", (VALUE (*)(...))SetMouseMoveOffset, -1);
+  rb_define_singleton_method(mRug, "mousedown",       (VALUE (*)(...))SetMouseDown,       -1);
+  rb_define_singleton_method(mRug, "mouseup",         (VALUE (*)(...))SetMouseUp,         -1);
 
   VALUE mKeyModule = rb_define_module_under(mRug, "Key");
   VALUE mMouseModule = rb_define_module_under(mRug, "Mouse");
@@ -203,7 +203,7 @@ void LoadEvents(VALUE mRug){
   RugEvents.MouseMoveOffset = Qnil;
 }
 
-int HandleEvent(SDL_Event ev){
+int HandleEvent(SDL_Event &ev){
   switch(ev.type){
   case SDL_KEYUP:
     if (RugEvents.KeyUp != Qnil){

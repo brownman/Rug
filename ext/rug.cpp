@@ -3,6 +3,8 @@
 #include "rug_conf.h"
 #include "rug_image.h"
 #include "rug_events.h"
+#include "rug_physics.h"
+#include "rug_layer.h"
 
 #include <SDL/SDL.h>
 #include <stdlib.h>
@@ -20,7 +22,7 @@ extern _RugConf RugConf;
  * at the beginning of the program, before any updates or
  * draws, but after the configuration block is loaded.
  */
-static VALUE RugLoad(int argc, VALUE * argv, VALUE class){
+static VALUE RugLoad(int argc, VALUE * argv, VALUE klass){
   if (rb_block_given_p()){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
@@ -34,7 +36,7 @@ static VALUE RugLoad(int argc, VALUE * argv, VALUE class){
  * code to be executed on each draw. This block does not have any
  * arguments.
  */
-static VALUE RugDraw(int argc, VALUE * argv, VALUE class){
+static VALUE RugDraw(int argc, VALUE * argv, VALUE klass){
   if (rb_block_given_p()){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
@@ -55,7 +57,7 @@ static VALUE RugDraw(int argc, VALUE * argv, VALUE class){
  *      # code for handling the update call
  *    end
  */
-static VALUE RugUpdate(int argc, VALUE * argv, VALUE class){
+static VALUE RugUpdate(int argc, VALUE * argv, VALUE klass){
   if (rb_block_given_p()){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
@@ -67,7 +69,7 @@ static VALUE RugUpdate(int argc, VALUE * argv, VALUE class){
 /*
  * Runs the application. This method will block until the program quits.
  */
-static VALUE RugStart(VALUE class){
+static VALUE RugStart(VALUE klass){
   SDL_Init(SDL_INIT_VIDEO);
   atexit(SDL_Quit);
 
@@ -118,16 +120,20 @@ static VALUE RugStart(VALUE class){
 /*
  * Shows/hides the cursor.
  */
-VALUE RugShowCursor(VALUE class, VALUE show){
+VALUE RugShowCursor(VALUE klass, VALUE show){
   SDL_ShowCursor(TYPE(show) == T_TRUE);
 }
 
 /*
  * Gets the number of milliseconds passed since the program started.
  */
-VALUE RugGetTime(VALUE class){
+VALUE RugGetTime(VALUE klass){
   return INT2FIX(SDL_GetTicks());
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void Init_Rug(){
   loadFunc = updateFunc = drawFunc = Qnil;
@@ -136,16 +142,16 @@ void Init_Rug(){
   mRug = rb_define_module("Rug");
 
   // main Rug actions
-  rb_define_singleton_method(mRug, "load", RugLoad, -1);
-  rb_define_singleton_method(mRug, "draw", RugDraw, -1);
-  rb_define_singleton_method(mRug, "update", RugUpdate, -1);
-  rb_define_singleton_method(mRug, "start", RugStart, -1);
+  rb_define_singleton_method(mRug, "load", (VALUE (*)(...))RugLoad, -1);
+  rb_define_singleton_method(mRug, "draw", (VALUE (*)(...))RugDraw, -1);
+  rb_define_singleton_method(mRug, "update", (VALUE (*)(...))RugUpdate, -1);
+  rb_define_singleton_method(mRug, "start", (VALUE (*)(...))RugStart, -1);
 
   // some basic options
-  rb_define_singleton_method(mRug, "show_cursor=", RugShowCursor, 1);
+  rb_define_singleton_method(mRug, "show_cursor=", (VALUE (*)(...))RugShowCursor, 1);
 
   // global functions
-  rb_define_singleton_method(mRug, "get_time", RugGetTime, 0);
+  rb_define_singleton_method(mRug, "get_time", (VALUE (*)(...))RugGetTime, 0);
 
   // load additional classes/modules
   LoadConf(mRug);
@@ -154,3 +160,7 @@ void Init_Rug(){
   LoadLayer(mRug);
   LoadPhysicsModule(mRug);
 }
+#ifdef __cplusplus
+}
+#endif
+

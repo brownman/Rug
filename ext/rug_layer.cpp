@@ -20,7 +20,7 @@ static void unload_layer(void * vp){
  * Creates a layer. If _width_ and _height_ are included, the layer will
  * have that size, otherwise it will have the same size as the window.
  */
-static VALUE RugCreateLayer(int argc, VALUE * argv, VALUE class){
+static VALUE RugCreateLayer(int argc, VALUE * argv, VALUE klass){
   if (mainWnd == NULL){
     return Qnil;
   }
@@ -137,9 +137,9 @@ void LoadLayer(VALUE mRug){
   // create conf class
   cRugLayer = rb_define_class_under(mRug, "Layer", rb_cObject);
 
-  rb_define_singleton_method(cRugLayer, "new", RugCreateLayer, -1);
-  rb_define_method(cRugLayer, "draw",  RugDrawLayer,  -1);
-  rb_define_method(cRugLayer, "clear", RugClearLayer, 0);
-  rb_define_method(cRugLayer, "width", RugLayerWidth, 0);
-  rb_define_method(cRugLayer, "height", RugLayerHeight, 0);
+  rb_define_singleton_method(cRugLayer, "new", (VALUE (*)(...))RugCreateLayer, -1);
+  rb_define_method(cRugLayer, "draw",  (VALUE (*)(...))RugDrawLayer,  -1);
+  rb_define_method(cRugLayer, "clear", (VALUE (*)(...))RugClearLayer, 0);
+  rb_define_method(cRugLayer, "width", (VALUE (*)(...))RugLayerWidth, 0);
+  rb_define_method(cRugLayer, "height", (VALUE (*)(...))RugLayerHeight, 0);
 }
