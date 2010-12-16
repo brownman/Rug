@@ -50,8 +50,8 @@ static VALUE new_image(int argc, VALUE * argv, VALUE klass){
       RugImage * rImage = ALLOC(RugImage);
 
       rImage->image = image;
-      rImage->foreColour = SDL_MapRGB(image->format, 0, 0, 0);
-      rImage->backColour = SDL_MapRGB(image->format, 255, 255, 255);
+      rImage->foreColour = SDL_MapRGBA(image->format, 0, 0, 0, 255);
+      rImage->backColour = SDL_MapRGBA(image->format, 255, 255, 255, 255);
 
       return Data_Wrap_Struct(cRugImage, NULL, unload_image, rImage);
     }
@@ -64,7 +64,7 @@ static VALUE new_image(int argc, VALUE * argv, VALUE klass){
 
     RugImage * rImage = ALLOC(RugImage);
 
-    rImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE | SDL_SRCALPHA | SDL_SRCCOLORKEY,
+    rImage->image = SDL_CreateRGBSurface(SDL_HWSURFACE,
         w, h, 32,
         RED_MASK, GREEN_MASK, BLUE_MASK, ALPHA_MASK);
 
@@ -130,9 +130,13 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
 
     SDL_Surface * target;
 
+    bool use_gfx = false;
+
     if (targetLayer == Qnil){
       target = mainWnd;
     }else{
+      use_gfx = true;
+
       RugLayer * layer;
       Data_Get_Struct(targetLayer, RugLayer, layer);
       target = layer->layer;
@@ -150,9 +154,19 @@ static VALUE blit_image(int argc, VALUE * argv, VALUE self){
       src.x = (sx != Qnil) ? FIX2INT(sx) : 0;
       src.y = (sy != Qnil) ? FIX2INT(sy) : 0;
 
-      SDL_gfxBlitRGBA(image->image, &src, target, &dst);
+      // Strange bug, if blitting an image directly to the screen
+      // the green is always maxed to 255. This seems to fix it.
+      if (use_gfx){
+        SDL_gfxBlitRGBA(image->image, &src, target, &dst);
+      }else{
+        SDL_BlitSurface(image->image, &src, target, &dst);
+      }
     }else{
-      SDL_gfxBlitRGBA(image->image, NULL, target, &dst);
+      if (use_gfx){
+        SDL_gfxBlitRGBA(image->image, NULL, target, &dst);
+      }else{
+        SDL_BlitSurface(image->image, NULL, target, &dst);
+      }
     }
   }
 
