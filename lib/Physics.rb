@@ -1,21 +1,79 @@
 module Rug
   module Physics
-    class Circle
-      attr_accessor :body, :radius
-      def initialize body, r; @body, @radius = body, r; end
+    def self.collide_circle_circle c1, c2
+      dx = c1.x - c2.x
+      dy = c1.y - c2.y
+      dr = c1.radius + c2.radius
+
+      dx * dx + dy * dy <= dr * dr
+    end
+
+    def self.collide_circle_rect c, r
+      point_in_rect(r, c.x, c.y) or
+      point_in_circle(c, r.x, r.y) or
+      point_in_circle(c, r.x, r.y + r.h) or
+      point_in_circle(c, r.x + r.w, r.y) or
+      point_in_circle(c, r.x + r.w, r.y + r.h)
+    end
+
+    def self.collide_rect_rect r1, r2
+      left = r1.x < r2.x ? r1 : r2
+      right = r1.x < r2.x ? r2 : r1
+      top = r1.h < r2.h ? r1 : r2
+      bottom = r1.h < r2.h ? r2 : r1
+
+      left.x + left.w >= right.x and top.y + top.h >= bottom.y
+    end
+
+    def self.point_in_circle c, px, py
+      dx = c.x - px
+      dy = c.y - py
+
+      dx * dx + dy * dy <= c.radius * c.radius
+    end
+
+    def self.point_in_rect r, px, py
+      px >= r.x and
+      px <= r.x + r.w and
+      py >= r.y and
+      py <= r.y + r.h
+    end
+
+    class Shape
+      attr_accessor :body
+      def initialize body
+        @body = body
+        body.shape = self
+      end
+      def x; body.x; end
+      def y; body.y; end
+    end
+
+    class Circle < Shape
+      attr_accessor :radius
+      def initialize body, r; super body; @radius = r; end
 
       def overlap shape
         if shape.is_a? Circle
-          dx = body.x - shape.x
-          dy = body.y - shape.y
-          dr = @radius + shape.radius
-
-          dx * dx + dy * dy <= dr * dr
+          Physics.collide_circle_circle self, shape
+        elsif shape.is_a? Rectangle
+          Physics.collide_circle_rect self, shape
         end
       end
+    end
 
-      def x; body.x; end
-      def y; body.y; end
+    class Rectangle < Shape
+      attr_accessor :w, :h
+
+      def initialize body, w, h; super body; @w, @h = w, h; end
+
+      def overlap shape
+        if shape.is_a? Circle
+          Physics.collide_circle_rect shape, self
+        elsif shape.is_a? Rectangle
+          Physics.collide_rect_rect self, shape
+        end
+      end
     end
 
     class World
@@ -53,7 +111,7 @@ module Rug
         end
 
         if obj
-          collision.call obj, which
+          @collision_func.call obj, which
         else
           false
         end
@@ -95,7 +153,7 @@ module Rug
         @vx, @vy = vxy.map(&:to_f)
         @mass = mass
 
-        world << self
+        world << self unless world == nil
       end
 
       def update dt
