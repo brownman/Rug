@@ -92,7 +92,7 @@ module Rug
       def initialize world, mass, xy, vxy = [0.0, 0.0]
         @world = world
         @x, @y = xy
-        @vx, @vy = vxy
+        @vx, @vy = vxy.map(&:to_f)
         @mass = mass
 
         world << self
@@ -121,6 +121,10 @@ module Rug
 
       def overlap body
         @shape.overlap body.shape
+      end
+
+      def screen_coords
+        @world.to_screen_coords @x, @y
       end
     end
   end
