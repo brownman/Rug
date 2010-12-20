@@ -70,6 +70,16 @@ module Rug
       def collision &func
         @collision_func = func
       end
+
+      def to_world_coords x, y = nil
+        x, y = x if y == nil
+        [x / @ppm, (Rug.height - y) / @ppm]
+      end
+
+      def to_screen_coords x, y = nil
+        x, y = x if y == nil
+        [x * @ppm, Rug.height - y * @ppm]
+      end
     end
 
     class Body
@@ -79,22 +89,13 @@ module Rug
       # Create a new body with a specified mass, location, and velocity
       # The mass is in kg, x and y are in pixels, and velocities are in
       # metres per second.
-      def initialize world, mass, x, y, vx = 0.0, vy = 0.0
+      def initialize world, mass, xy, vxy = [0.0, 0.0]
         @world = world
-        @x = x / @world.ppm
-        @y = (Rug.height - y) / @world.ppm
-        @vx, @vy = vx, vy
+        @x, @y = xy
+        @vx, @vy = vxy
         @mass = mass
 
         world << self
-      end
-
-      def screen_x
-        @x * @world.ppm
-      end
-      
-      def screen_y
-        Rug.height - @y * @world.ppm
       end
 
       def update dt
