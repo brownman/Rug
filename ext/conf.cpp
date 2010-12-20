@@ -1,4 +1,4 @@
-#include "rug_conf.h"
+#include "conf.h"
 
 #include <SDL/SDL.h>
 
@@ -95,7 +95,8 @@ static VALUE RugConfFunc(int argc, VALUE * argv, VALUE klass){
 
 // This function performs all configuration necessary and returns the screen object
 SDL_Surface * DoConf(){
-  int params = SDL_HWSURFACE | SDL_SRCALPHA;
+  // TODO: make double buffering optional
+  int params = SDL_HWSURFACE | SDL_SRCALPHA | SDL_DOUBLEBUF;
 
   if (RugConf.fullscreen){
     params |= SDL_FULLSCREEN;

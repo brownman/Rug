@@ -1,5 +1,5 @@
-#include "rug_defs.h"
-#include "rug_layer.h"
+#include "defs.h"
+#include "layer.h"
 
 VALUE cRugLayer;
 

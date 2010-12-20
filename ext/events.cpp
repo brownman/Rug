@@ -1,8 +1,8 @@
-#include "rug_events.h"
+#include "events.h"
 
 #include <SDL/SDL.h>
 
-struct {
+struct _RugEvents {
   VALUE KeyUp, KeyDown, MouseMove, MouseDown, MouseUp, MouseMoveOffset;
 } RugEvents;
 

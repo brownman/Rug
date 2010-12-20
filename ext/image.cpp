@@ -1,6 +1,6 @@
-#include "rug_defs.h"
-#include "rug_image.h"
-#include "rug_layer.h"
+#include "defs.h"
+#include "image.h"
+#include "layer.h"
 
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_rotozoom.h>
@@ -494,6 +494,38 @@ static VALUE image_fill_rect(VALUE self, VALUE l, VALUE t, VALUE r, VALUE b){
   return Qnil;
 }
 
+/*
+ * Draws a non-filled circle using the current foreground colour.
+ *
+ * _x_: The x coordinate of the centre of the circle
+ * _y_: The y coordinate of the centre of the circle
+ * _r_: The radius of the circle
+ */
+static VALUE image_draw_circle(VALUE self, VALUE x, VALUE y, VALUE r){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  circleColor(image->image, FIX2INT(x), FIX2INT(y), FIX2INT(r), image->foreColour);
+
+  return Qnil;
+}
+
+/*
+ * Draws a filled circle using the current background colour.
+ *
+ * _x_: The x coordinate of the centre of the circle
+ * _y_: The y coordinate of the centre of the circle
+ * _r_: The radius of the circle
+ */
+static VALUE image_fill_circle(VALUE self, VALUE x, VALUE y, VALUE r){
+  RugImage *image;
+  Data_Get_Struct(self, RugImage, image);
+
+  filledCircleColor(image->image, FIX2INT(x), FIX2INT(y), FIX2INT(r), image->backColour);
+
+  return Qnil;
+}
+
 void LoadImageModule(VALUE rugModule){
   IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
   atexit(IMG_Quit);
@@ -522,10 +554,12 @@ void LoadImageModule(VALUE rugModule){
   rb_define_method(cRugImage, "flip_h!", (VALUE (*)(...))flip_h_image_d, 0);
   rb_define_method(cRugImage, "flip_v!", (VALUE (*)(...))flip_v_image_d, 0);
 
-  // TODO: Add in circles
+  // TODO: Add in ellipses, rounded rectangles
   rb_define_method(cRugImage, "draw_rect", (VALUE (*)(...))image_draw_rect, 4);
   rb_define_method(cRugImage, "fill_rect", (VALUE (*)(...))image_fill_rect, 4);
   rb_define_method(cRugImage, "draw_pie", (VALUE (*)(...))image_draw_pie, 5);
   rb_define_method(cRugImage, "fill_pie", (VALUE (*)(...))image_fill_pie, 5);
+  rb_define_method(cRugImage, "draw_circle", (VALUE (*)(...))image_draw_circle, 3);
+  rb_define_method(cRugImage, "fill_circle", (VALUE (*)(...))image_fill_circle, 3);
 }
 

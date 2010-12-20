@@ -1,10 +1,9 @@
 #include "ruby.h"
 
-#include "rug_conf.h"
-#include "rug_image.h"
-#include "rug_events.h"
-#include "rug_physics.h"
-#include "rug_layer.h"
+#include "conf.h"
+#include "image.h"
+#include "events.h"
+#include "layer.h"
 
 #include <SDL/SDL.h>
 #include <stdlib.h>
@@ -108,6 +107,7 @@ static VALUE RugStart(VALUE klass){
         rb_funcall(drawFunc, rb_intern("call"), 0);
       }
       SDL_UpdateRect(mainWnd, 0, 0, 0, 0);
+      SDL_Flip(mainWnd);
       lastDraw = now;
     }
 
@@ -131,6 +131,20 @@ VALUE RugGetTime(VALUE klass){
   return INT2FIX(SDL_GetTicks());
 }
 
+/*
+ * Gets the width of the main window.
+ */
+VALUE RugGetWidth(VALUE klass){
+  return INT2FIX(SDL_GetVideoSurface()->w);
+}
+
+/*
+ * Gets the height of the main window.
+ */
+VALUE RugGetHeight(VALUE klass){
+  return INT2FIX(SDL_GetVideoSurface()->h);
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -152,13 +166,14 @@ void Init_Rug(){
 
   // global functions
   rb_define_singleton_method(mRug, "get_time", (VALUE (*)(...))RugGetTime, 0);
+  rb_define_singleton_method(mRug, "width", (VALUE (*)(...))RugGetWidth, 0);
+  rb_define_singleton_method(mRug, "height", (VALUE (*)(...))RugGetHeight, 0);
 
   // load additional classes/modules
   LoadConf(mRug);
   LoadEvents(mRug);
   LoadImageModule(mRug);
   LoadLayer(mRug);
-  LoadPhysicsModule(mRug);
 }
 #ifdef __cplusplus
 }
