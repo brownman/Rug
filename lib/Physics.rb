@@ -51,7 +51,7 @@ module Rug
 
     class Circle < Shape
       attr_accessor :radius
-      def initialize body, r; super body; @radius = r; end
+      def initialize r; @radius = r; end
 
       def overlap shape
         if shape.is_a? Circle
@@ -65,7 +65,7 @@ module Rug
     class Rectangle < Shape
       attr_accessor :w, :h
 
-      def initialize body, w, h; super body; @w, @h = w, h; end
+      def initialize w, h; @w, @h = w, h; end
 
       def overlap shape
         if shape.is_a? Circle
@@ -77,15 +77,12 @@ module Rug
     end
 
     class World
-      # ppm is pixels_per_metre
-      # shape is a shape object
-      attr_accessor :ppm, :shape
+      attr_accessor :gravity
 
       def initialize
         # TODO: come up with a better data structure for objects
         @objects = Array.new
-        @ppm = 30.0
-        @gravity = 9.8
+        @gravity = 200.0
       end
 
       def << obj
@@ -111,7 +108,8 @@ module Rug
         end
 
         if obj
-          @collision_func.call obj, which
+          which.collide obj
+          obj.collide which
         else
           false
         end
@@ -128,16 +126,6 @@ module Rug
       def collision &func
         @collision_func = func
       end
-
-      def to_world_coords x, y = nil
-        x, y = x if y == nil
-        [x / @ppm, (Rug.height - y) / @ppm]
-      end
-
-      def to_screen_coords x, y = nil
-        x, y = x if y == nil
-        [x * @ppm, Rug.height - y * @ppm]
-      end
     end
 
     class Body
@@ -147,13 +135,11 @@ module Rug
       # Create a new body with a specified mass, location, and velocity
       # The mass is in kg, x and y are in pixels, and velocities are in
       # metres per second.
-      def initialize world, mass, xy, vxy = [0.0, 0.0]
-        @world = world
-        @x, @y = xy
-        @vx, @vy = vxy.map(&:to_f)
+      def initialize mass, x, y, vx = 0.0, vy = 0.0
+        @x, @y = x, y
+        @vx, @vy = vx.to_f, vy.to_f
         @mass = mass
-
-        world << self unless world == nil
+        @collision_func = nil
       end
 
       def update dt
@@ -181,8 +167,20 @@ module Rug
         @shape.overlap body.shape
       end
 
-      def screen_coords
-        @world.to_screen_coords @x, @y
+      def collide other = nil, &func
+        if func != nil
+          @collision_func = func
+        elsif @collision_func != nil
+          @collision_func.call other
+        end
+      end
+
+      def stop
+        @vx = @vy = 0
+      end
+
+      def position
+        [@x, @y]
       end
     end
   end
