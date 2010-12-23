@@ -145,7 +145,11 @@ module Rug
       end
 
       def overlap body
-        @shape.overlap body.shape
+        if @shape and body.shape
+          @shape.overlap body.shape
+        else
+          false
+        end
       end
 
       def collide other
