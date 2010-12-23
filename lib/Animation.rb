@@ -2,6 +2,7 @@ module Rug
   class Animation
     # TODO: define a callback for when the animation finishes
     # TODO: then define a method for one-time animations
+    # TODO: put all this stuff in a file so that it doesn't have to be in code
     class Frameset
       attr_reader :image, :frame_width, :timing, :width, :height, :num_frames
       def initialize args = {}
