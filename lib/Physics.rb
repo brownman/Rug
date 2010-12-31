@@ -150,6 +150,10 @@ module Rug
     module Body
       attr_accessor :world, :shape, :mass, :x, :y, :vx, :vy
 
+      def initialize x = 0.0, y = 0.0, vx = 0.0, vy = 0.0, mass = 0.0
+        @x, @y, @vx, @vy, @mass = x, y, vx, vy, mass
+      end
+
       def update_body dt
         x, y = @x, @y
         @x += @vx * dt / 1000.0
