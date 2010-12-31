@@ -1,7 +1,7 @@
 module Rug
   module HasAnimation
     def draw layer = nil
-      @animation.draw @x, @y, layer
+      @animation.draw @x, Rug.height - @y, layer
     end
 
     def update_animation dt

@@ -121,7 +121,7 @@ module Rug
         @objects.each do |obj|
           obj.update dt
 
-          obj.apply_force 0, @gravity * obj.mass * dt / 1000.0
+          obj.apply_force 0, -@gravity * obj.mass * dt / 1000.0
         end
       end
 
