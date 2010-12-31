@@ -22,6 +22,10 @@ void RenderGraphics(){
 }
 
 static VALUE RugDrawText(VALUE self, VALUE rx, VALUE ry, VALUE rtext, SDL_Surface * (*renderFunc)(TTF_Font *, const char *, SDL_Color)){
+  if (RugGraphics.font == NULL){
+    return Qnil;
+  }
+
   int x = FIX2INT(rx);
   int y = FIX2INT(ry);
 
@@ -56,7 +60,8 @@ void UnloadGraphics(){
 }
 
 static void SetForeColour(int r, int g, int b, int a){
-  RugGraphics.foreColour = SDL_MapRGBA(SDL_GetVideoSurface()->format, r, g, b, a);
+  // This is not used yet and causes some problems, so I left it out
+  //RugGraphics.foreColour = SDL_MapRGBA(SDL_GetVideoSurface()->format, r, g, b, a);
 
   RugGraphics.foreColourS.r = r;
   RugGraphics.foreColourS.g = g;
@@ -64,7 +69,8 @@ static void SetForeColour(int r, int g, int b, int a){
 }
 
 static void SetBackColour(int r, int g, int b, int a){
-  RugGraphics.backColour = SDL_MapRGBA(SDL_GetVideoSurface()->format, r, g, b, a);
+  // This is not used yet and causes some problems, so I left it out
+  //RugGraphics.backColour = SDL_MapRGBA(SDL_GetVideoSurface()->format, r, g, b, a);
 
   RugGraphics.backColourS.r = r;
   RugGraphics.backColourS.g = g;
@@ -74,7 +80,7 @@ static void SetBackColour(int r, int g, int b, int a){
 /*
  * Sets the foreground colour of the graphics object.
  */
-static VALUE GraphicsSetFore(VALUE self, VALUE colour){
+static VALUE GraphicsSetFore(VALUE klass, VALUE colour){
   Uint8 r = FIX2INT(rb_iv_get(colour, "@r"));
   Uint8 g = FIX2INT(rb_iv_get(colour, "@g"));
   Uint8 b = FIX2INT(rb_iv_get(colour, "@b"));
@@ -88,7 +94,7 @@ static VALUE GraphicsSetFore(VALUE self, VALUE colour){
 /*
  * Sets the background colour of the graphics object.
  */
-static VALUE GraphicsSetBack(VALUE self, VALUE colour){
+static VALUE GraphicsSetBack(VALUE klass, VALUE colour){
   Uint8 r = FIX2INT(rb_iv_get(colour, "@r"));
   Uint8 g = FIX2INT(rb_iv_get(colour, "@g"));
   Uint8 b = FIX2INT(rb_iv_get(colour, "@b"));
@@ -103,23 +109,31 @@ void LoadGraphics(VALUE mRug){
   TTF_Init();
 
   // TODO: make font and size configurable
-  RugGraphics.font = TTF_OpenFont("lib/FreeSans.ttf", 12);
+  RugGraphics.font = TTF_OpenFont("FreeSans.ttf", 12);
+
+  if (RugGraphics.font == NULL){
+    printf("Could not load font!\n");
+  }
 
   atexit(UnloadGraphics);
 
   cRugGraphics = rb_define_class_under(mRug, "Graphics", rb_cObject);
 
   // add some methods
-  rb_define_method(cRugGraphics, "fore_colour", (VALUE (*)(...))GraphicsSetFore, 1);
-  rb_define_method(cRugGraphics, "back_colour", (VALUE (*)(...))GraphicsSetBack, 1);
-  rb_define_method(cRugGraphics, "fore_color", (VALUE (*)(...))GraphicsSetFore, 1);
-  rb_define_method(cRugGraphics, "back_color", (VALUE (*)(...))GraphicsSetBack, 1);
+  rb_define_singleton_method(cRugGraphics, "fore_colour=", (VALUE (*)(...))GraphicsSetFore, 1);
+  rb_define_singleton_method(cRugGraphics, "back_colour=", (VALUE (*)(...))GraphicsSetBack, 1);
+  rb_define_singleton_method(cRugGraphics, "fore_color=", (VALUE (*)(...))GraphicsSetFore, 1);
+  rb_define_singleton_method(cRugGraphics, "back_color=", (VALUE (*)(...))GraphicsSetBack, 1);
 
+  // TODO: put all the circle/rectangle drawing methods in here too
   rb_define_method(cRugGraphics, "fast_text", (VALUE (*)(...))RugDrawTextFast, 3);
   rb_define_method(cRugGraphics, "text", (VALUE (*)(...))RugDrawTextNice, 3);
 
   RugGraphics.graphicsObj = rb_funcall(cRugGraphics, rb_intern("new"), 0);
   RugGraphics.renderFunc = Qnil;
+
+  SetForeColour(255, 255, 255, 255);
+  SetBackColour(0, 0, 0, 255);
 
   // need to set the instance variable or it will get GC'ed
   rb_iv_set(cRugGraphics, "@graphics", RugGraphics.graphicsObj);
