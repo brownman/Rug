@@ -125,8 +125,12 @@ void LoadConf(VALUE mRug){
   RugConf.repeatInterval = SDL_DEFAULT_REPEAT_INTERVAL;
 
   block_converter = rb_eval_string("proc { |recv, msg, block| recv.send(msg, &block) }");
+
   // add to main module
   rb_define_singleton_method(mRug, "conf", (VALUE (*)(...))RugConfFunc, -1);
+
+  // need to set an instance variable or this will get GC'ed
+  rb_iv_set(mRug, "@block_converter", block_converter);
   
   // create conf class
   cRugConf = rb_define_class_under(mRug, "Conf", rb_cObject);

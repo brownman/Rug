@@ -17,6 +17,20 @@ describe "Collision detection" do
     @body3.shape = @circ2
   end
 
+  it "tests line circle intersection" do
+    Physics.line_circle_intersect(@circ, 15, 0, 15, 30).should == true
+    Physics.line_circle_intersect(@circ, 0, 20, 30, 20).should == true
+
+    Physics.line_circle_intersect(@circ, 30, 0, 30, 30).should_not == true
+    Physics.line_circle_intersect(@circ, 0, 30, 30, 30).should_not == true
+
+    # test a line that ends within the circle
+    Physics.line_circle_intersect(@circ, 0, 0, 10, 10).should == true
+
+    # test a line that is going towards the circle, but doesn't cross it
+    Physics.line_circle_intersect(@circ, 30, 30, 40, 40).should_not == true
+  end
+
   it "should collide with rect" do
     Physics.point_in_rect(@rect, 25, 25).should == true
   end
@@ -38,6 +52,19 @@ describe "Collision detection" do
 
   it "should overlap" do
     @body1.overlap(@body2).should == true
+
+    # test intersection with bottom left
+    @body2.y = 35
+
+    @body1.overlap(@body2).should == true
+  end
+
+  it "should overlap - small circle" do
+    # create a small circle near the rectangle, it should overlap
+    body = Body.new 0.0, 18, 25
+    body.shape = Circle.new 4
+
+    @body1.overlap(body).should == true
   end
 
   it "should not overlap" do

@@ -2,7 +2,7 @@ require 'mkmf'
 
 good = true
 
-libraries = %w[SDL SDL_image SDL_gfx stdc++]
+libraries = %w[SDL SDL_image SDL_gfx SDL_ttf stdc++]
 
 libraries.each do |lib|
   if not have_library(lib)

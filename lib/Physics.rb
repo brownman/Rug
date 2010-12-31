@@ -10,10 +10,10 @@ module Rug
 
     def self.collide_circle_rect c, r
       point_in_rect(r, c.x, c.y) or
-      point_in_circle(c, r.x, r.y) or
-      point_in_circle(c, r.x, r.y + r.h) or
-      point_in_circle(c, r.x + r.w, r.y) or
-      point_in_circle(c, r.x + r.w, r.y + r.h)
+      line_circle_intersect(c, r.x, r.y, r.x, r.y + r.h) or  # left side
+      line_circle_intersect(c, r.x, r.y, r.x + r.w, r.y) or  # top side
+      line_circle_intersect(c, r.x, r.y + r.h, r.x + r.w, r.y + r.h) or # bottom side
+      line_circle_intersect(c, r.x + r.w, r.y, r.x + r.w, r.y + r.h)    # right side
     end
 
     def self.collide_rect_rect r1, r2
@@ -37,6 +37,33 @@ module Rug
       px <= r.x + r.w and
       py >= r.y and
       py <= r.y + r.h
+    end
+
+    def self.line_circle_intersect c, x1, y1, x2, y2
+      if point_in_circle(c, x1, y1) or point_in_circle(c, x2, y2)
+        true
+      else
+        dx = x1 - x2
+        dy = y1 - y2
+        fx = c.x - x1
+        fy = c.y - y1
+
+        a = dx * dx + dy * dy
+        b = 2 * (fx * dx + fy * dy)
+        c = (fx * fx + fy * fy) - c.radius * c.radius
+
+        disc = b * b - 4 * a * c
+
+        if disc < 0
+          false
+        else
+          disc = Math.sqrt disc
+          t1 = (-b + disc) / (2 * a)
+          t2 = (-b - disc) / (2 * a)
+
+          t1 >= 0 and t1 <= 1 and t2 >= 0 and t2 <= 1
+        end
+      end
     end
 
     class Shape
@@ -129,8 +156,7 @@ module Rug
     end
 
     class Body
-      attr_accessor :world, :shape
-      attr_reader :mass, :x, :y, :vx, :vy
+      attr_accessor :world, :shape, :x, :y, :vx, :vy, :mass
 
       # Create a new body with a specified mass, location, and velocity
       # The mass is in kg, x and y are in pixels, and velocities are in

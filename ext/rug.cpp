@@ -4,13 +4,14 @@
 #include "image.h"
 #include "events.h"
 #include "layer.h"
+#include "graphics.h"
 
 #include <SDL/SDL.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 SDL_Surface * mainWnd = NULL;
-VALUE loadFunc, drawFunc, updateFunc;
+VALUE loadFunc, updateFunc;
 
 VALUE mRug, mRugEvent;
 
@@ -39,7 +40,7 @@ static VALUE RugDraw(int argc, VALUE * argv, VALUE klass){
   if (rb_block_given_p()){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
-    drawFunc = func;
+    SetGraphicsFunc(func);
   }
   return Qnil;
 }
@@ -103,11 +104,7 @@ static VALUE RugStart(VALUE klass){
       // render
       SDL_FillRect(mainWnd, NULL, black);
 
-      if (drawFunc != Qnil){
-        rb_funcall(drawFunc, rb_intern("call"), 0);
-      }
-      SDL_UpdateRect(mainWnd, 0, 0, 0, 0);
-      SDL_Flip(mainWnd);
+      RenderGraphics();
       lastDraw = now;
     }
 
@@ -150,7 +147,7 @@ extern "C" {
 #endif
 
 void Init_Rug(){
-  loadFunc = updateFunc = drawFunc = Qnil;
+  loadFunc = updateFunc = Qnil;
 
   // Main Rug module
   mRug = rb_define_module("Rug");
@@ -174,6 +171,7 @@ void Init_Rug(){
   LoadEvents(mRug);
   LoadImageModule(mRug);
   LoadLayer(mRug);
+  LoadGraphics(mRug);
 }
 #ifdef __cplusplus
 }
