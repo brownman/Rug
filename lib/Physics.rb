@@ -121,7 +121,7 @@ module Rug
         @objects.each do |obj|
           obj.update dt
 
-          obj.apply_force 0, -@gravity * obj.mass * dt / 1000.0
+          obj.apply_force 0, @gravity * obj.mass * dt / 1000.0
         end
       end
 
@@ -145,30 +145,12 @@ module Rug
       def remove body
         @objects.delete body
       end
-
-      # sets a function to call when a collision occurs
-      #
-      # the function must return true if the collision should stop
-      # the objects from moving, false if not
-      def collision &func
-        @collision_func = func
-      end
     end
 
-    class Body
-      attr_accessor :world, :shape, :x, :y, :vx, :vy, :mass
+    module Body
+      attr_accessor :world, :shape, :mass, :x, :y, :vx, :vy
 
-      # Create a new body with a specified mass, location, and velocity
-      # The mass is in kg, x and y are in pixels, and velocities are in
-      # metres per second.
-      def initialize mass, x, y, vx = 0.0, vy = 0.0
-        @x, @y = x, y
-        @vx, @vy = vx.to_f, vy.to_f
-        @mass = mass
-        @collision_func = nil
-      end
-
-      def update dt
+      def update_body dt
         x, y = @x, @y
         @x += @vx * dt / 1000.0
         @y += @vy * dt / 1000.0
@@ -190,23 +172,22 @@ module Rug
       end
 
       def overlap body
-        @shape.overlap body.shape
-      end
-
-      def collide other = nil, &func
-        if func != nil
-          @collision_func = func
-        elsif @collision_func != nil
-          @collision_func.call other
+        if @shape and body.shape
+          @shape.overlap body.shape
+        else
+          false
         end
       end
 
-      def stop
-        @vx = @vy = 0
+      def collide other
+        # TODO: don't completely stop, but stop in the direction that the object is blocked
+        true
       end
 
-      def position
-        [@x, @y]
+      # This is typically overidden by classes that include this module,
+      # but put it here anyway
+      def update dt
+        update_body dt
       end
     end
   end
