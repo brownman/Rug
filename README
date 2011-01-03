@@ -9,10 +9,6 @@ fun stuff for the programmer.
 Rug has been tested under Ubuntu Linux and Windows, both of these platforms work. You
 can get the binary versions from the Downloads section on github.
 
-You can also install the gem:
-
-    gem install Rug
-
 ============================
    Building from source
 ============================
