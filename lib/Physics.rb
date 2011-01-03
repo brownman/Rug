@@ -1,5 +1,9 @@
 module Rug
   module Physics
+    # A circle-circle intersection algorithm
+    # This works by seeing if the distance between
+    # the two centres is greater than the sum of the
+    # radii or not
     def self.collide_circle_circle c1, c2
       dx = c1.x - c2.x
       dy = c1.y - c2.y
@@ -8,6 +12,10 @@ module Rug
       dx * dx + dy * dy <= dr * dr
     end
 
+    # A circle-rectangle intersection algorithm
+    # There is an intersection if the centre of the circle
+    # is in the rectangle, or if one of the sides of the
+    # rectangle intersects the circle
     def self.collide_circle_rect c, r
       point_in_rect(r, c.x, c.y) or
       line_circle_intersect(c, r.x, r.y, r.x, r.y + r.h) or  # left side
@@ -16,6 +24,7 @@ module Rug
       line_circle_intersect(c, r.x + r.w, r.y, r.x + r.w, r.y + r.h)    # right side
     end
 
+    # A rectangle-rectangle intersection algorithm
     def self.collide_rect_rect r1, r2
       left = r1.x < r2.x ? r1 : r2
       right = r1.x < r2.x ? r2 : r1
@@ -25,6 +34,8 @@ module Rug
       left.x + left.w >= right.x and top.y + top.h >= bottom.y
     end
 
+    # A point-in-circle algorithm
+    # Checks the distance between the point and the centre against the radius
     def self.point_in_circle c, px, py
       dx = c.x - px
       dy = c.y - py
@@ -32,6 +43,7 @@ module Rug
       dx * dx + dy * dy <= c.radius * c.radius
     end
 
+    # A point-in-rectangle algorithm
     def self.point_in_rect r, px, py
       px >= r.x and
       px <= r.x + r.w and
@@ -39,6 +51,9 @@ module Rug
       py <= r.y + r.h
     end
 
+    # A line-circle intersection algorithm
+    # If one of the endpoints is in the circle then it intersects,
+    # otherwise it finds the point on the line closest to the centre.
     def self.line_circle_intersect c, x1, y1, x2, y2
       if point_in_circle(c, x1, y1) or point_in_circle(c, x2, y2)
         true
@@ -66,6 +81,7 @@ module Rug
       end
     end
 
+    # This is a base class used for collision detection.
     class Shape
       attr_accessor :body
       def initialize body
@@ -80,11 +96,13 @@ module Rug
       attr_accessor :radius
       def initialize r; @radius = r; end
 
-      def overlap shape
+      def overlap? shape
         if shape.is_a? Circle
           Physics.collide_circle_circle self, shape
         elsif shape.is_a? Rectangle
           Physics.collide_circle_rect self, shape
+        else
+          shape.overlap? self
         end
       end
     end
@@ -94,11 +112,13 @@ module Rug
 
       def initialize w, h; @w, @h = w, h; end
 
-      def overlap shape
+      def overlap? shape
         if shape.is_a? Circle
           Physics.collide_circle_rect shape, self
         elsif shape.is_a? Rectangle
           Physics.collide_rect_rect self, shape
+        else
+          shape.overlap? self
         end
       end
     end
@@ -131,7 +151,7 @@ module Rug
 
       def collision? which
         obj = @objects.find do |o|
-          o != which and o.overlap which
+          o != which and o.overlap? which
         end
 
         if obj
@@ -175,9 +195,9 @@ module Rug
         @shape = shape
       end
 
-      def overlap body
+      def overlap? body
         if @shape and body.shape
-          @shape.overlap body.shape
+          @shape.overlap? body.shape
         else
           false
         end
