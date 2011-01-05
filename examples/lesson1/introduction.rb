@@ -4,9 +4,10 @@ require File.dirname(__FILE__) + "/../../lib/Rug"
 # - put a title for our window
 # - make the window 1024x768 pixels
 Rug.conf do
-  title  "Lesson 1 - Introduction to Rug"
-  width  1024
-  height 768
+  title       "Lesson 1 - Introduction to Rug"
+  width       1024
+  height      768
+  show_cursor false
 end
 
 Rug.draw do

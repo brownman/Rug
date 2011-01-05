@@ -63,8 +63,16 @@ VALUE RugConfSetInterval(VALUE self, VALUE _repeatInterval){
  * Sets whether the app will be full screen or not.
  */
 VALUE RugConfSetFullscreen(VALUE self, VALUE _fullscreen){
-  RugConf.fullscreen = (_fullscreen == Qtrue ? 1 : 0);
+  RugConf.fullscreen = (_fullscreen == Qtrue ? true : false);
   return _fullscreen;
+}
+
+/*
+ * Sets whether to show the cursor or not.
+ */
+VALUE RugConfSetShowCursor(VALUE self, VALUE show_cursor){
+  RugConf.show_cursor = (show_cursor == Qtrue ? true : false);
+  return show_cursor;
 }
 
 /*
@@ -107,6 +115,8 @@ SDL_Surface * DoConf(){
     SDL_WM_SetCaption(STR2CSTR(RugConf.title), NULL);
   }
 
+  SDL_ShowCursor(RugConf.show_cursor);
+
   // enable key repeating
   SDL_EnableKeyRepeat(RugConf.repeatDelay, RugConf.repeatInterval);
 
@@ -141,6 +151,7 @@ void LoadConf(VALUE mRug){
   rb_define_method(cRugConf, "title",               (VALUE (*)(...))RugConfSetTitle, 1);
   rb_define_method(cRugConf, "fps",                 (VALUE (*)(...))RugConfSetFPS, 1);
   rb_define_method(cRugConf, "fullscreen",          (VALUE (*)(...))RugConfSetFullscreen, 1);
+  rb_define_method(cRugConf, "show_cursor",         (VALUE (*)(...))RugConfSetShowCursor, 1);
   rb_define_method(cRugConf, "key_repeat_delay",    (VALUE (*)(...))RugConfSetDelay, 1);
   rb_define_method(cRugConf, "key_repeat_interval", (VALUE (*)(...))RugConfSetInterval, 1);
 }

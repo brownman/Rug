@@ -9,7 +9,8 @@ typedef struct {
   VALUE title;
   int repeatDelay, repeatInterval;
   int frameGap;
-  int fullscreen;
+  bool fullscreen;
+  bool show_cursor;
 } _RugConf;
 
 void LoadConf(VALUE);

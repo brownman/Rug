@@ -1,6 +1,6 @@
 Rug is a basic gaming library for Ruby, based on Love2D for Lua. The goal is to promote
-rapid game development by handling the boiler plate details under the hood and leave the
-fun stuff for the programmer.
+rapid game development by taking care of the boiler-plate details and leaving the fun stuff
+for the programmer.
 
 ============================
         Installation
@@ -18,9 +18,6 @@ To build:
     cd ext
     ruby extconf.rb
     make
-
-At the moment there are no pre-built versions of Rug for you to download. These will
-be made available as soon as possible.
 
 ============================
         Dependencies

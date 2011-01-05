@@ -1,9 +1,24 @@
 #include "events.h"
 
 #include <SDL/SDL.h>
+#include <list>
+
+using namespace std;
+
+typedef std::list<VALUE>           EventList;
+typedef std::list<VALUE>::iterator EventIterator;
+
+static const int KEYUP           = 0;
+static const int KEYDOWN         = 1;
+static const int MOUSEMOVE       = 2;
+static const int MOUSEDOWN       = 3;
+static const int MOUSEUP         = 4;
+static const int MOUSEMOVEOFFSET = 5;
+
+static const int NUM_EVENTS = 6;
 
 struct _RugEvents {
-  VALUE KeyUp, KeyDown, MouseMove, MouseDown, MouseUp, MouseMoveOffset;
+  list<VALUE> events[NUM_EVENTS];
 } RugEvents;
 
 /*
@@ -11,10 +26,10 @@ struct _RugEvents {
  * block must accept one argument, which is the key as defined in the
  * Rug::Key module.
  */
-static VALUE SetKeyUp(int argc, VALUE * argv, VALUE self){
+static VALUE AddKeyUp(int argc, VALUE * argv, VALUE self){
   VALUE keyup;
   rb_scan_args(argc, argv, "0&", &keyup);
-  RugEvents.KeyUp = keyup;
+  RugEvents.events[KEYUP].push_back(keyup);
   return Qnil;
 }
 
@@ -23,10 +38,10 @@ static VALUE SetKeyUp(int argc, VALUE * argv, VALUE self){
  * block must accept one argument, which is the key as defined in the
  * Rug::Key module.
  */
-static VALUE SetKeyDown(int argc, VALUE * argv, VALUE self){
+static VALUE AddKeyDown(int argc, VALUE * argv, VALUE self){
   VALUE keydown;
   rb_scan_args(argc, argv, "0&", &keydown);
-  RugEvents.KeyDown = keydown;
+  RugEvents.events[KEYDOWN].push_back(keydown);
   return Qnil;
 }
 
@@ -35,10 +50,10 @@ static VALUE SetKeyDown(int argc, VALUE * argv, VALUE self){
  * must accept two parameters, which are the x and y locations of the
  * new mouse position.
  */
-static VALUE SetMouseMove(int argc, VALUE * argv, VALUE self){
+static VALUE AddMouseMove(int argc, VALUE * argv, VALUE self){
   VALUE mousemove;
   rb_scan_args(argc, argv, "0&", &mousemove);
-  RugEvents.MouseMove = mousemove;
+  RugEvents.events[MOUSEMOVE].push_back(mousemove);
   return Qnil;
 }
 
@@ -47,10 +62,10 @@ static VALUE SetMouseMove(int argc, VALUE * argv, VALUE self){
  * down. There are three parameters: the x and y location, and the button
  * that was pressed (as defined in the Rug::Mouse module).
  */
-static VALUE SetMouseDown(int argc, VALUE * argv, VALUE self){
+static VALUE AddMouseDown(int argc, VALUE * argv, VALUE self){
   VALUE mousedown;
   rb_scan_args(argc, argv, "0&", &mousedown);
-  RugEvents.MouseDown = mousedown;
+  RugEvents.events[MOUSEDOWN].push_back(mousedown);
   return Qnil;
 }
 
@@ -59,10 +74,10 @@ static VALUE SetMouseDown(int argc, VALUE * argv, VALUE self){
  * There are three parameters: the x and y location, and the button that
  * was pressed (as defined in the Rug::Mouse module).
  */
-static VALUE SetMouseUp(int argc, VALUE * argv, VALUE self){
+static VALUE AddMouseUp(int argc, VALUE * argv, VALUE self){
   VALUE mouseup;
   rb_scan_args(argc, argv, "0&", &mouseup);
-  RugEvents.MouseUp = mouseup;
+  RugEvents.events[MOUSEUP].push_back(mouseup);
   return Qnil;
 }
 
@@ -71,20 +86,20 @@ static VALUE SetMouseUp(int argc, VALUE * argv, VALUE self){
  * block must accept two parameters, which are the x and y offsets
  * from the mouse's previous position.
  */
-static VALUE SetMouseMoveOffset(int argc, VALUE * argv, VALUE self){
+static VALUE AddMouseMoveOffset(int argc, VALUE * argv, VALUE self){
   VALUE func;
   rb_scan_args(argc, argv, "0&", &func);
-  RugEvents.MouseMoveOffset = func;
+  RugEvents.events[MOUSEMOVEOFFSET].push_back(func);
   return Qnil;
 }
 
 void LoadEvents(VALUE mRug){
-  rb_define_singleton_method(mRug, "keyup",           (VALUE (*)(...))SetKeyUp,           -1);
-  rb_define_singleton_method(mRug, "keydown",         (VALUE (*)(...))SetKeyDown,         -1);
-  rb_define_singleton_method(mRug, "mousemove",       (VALUE (*)(...))SetMouseMove,       -1);
-  rb_define_singleton_method(mRug, "mousemoveoffset", (VALUE (*)(...))SetMouseMoveOffset, -1);
-  rb_define_singleton_method(mRug, "mousedown",       (VALUE (*)(...))SetMouseDown,       -1);
-  rb_define_singleton_method(mRug, "mouseup",         (VALUE (*)(...))SetMouseUp,         -1);
+  rb_define_singleton_method(mRug, "keyup",           (VALUE (*)(...))AddKeyUp,           -1);
+  rb_define_singleton_method(mRug, "keydown",         (VALUE (*)(...))AddKeyDown,         -1);
+  rb_define_singleton_method(mRug, "mousemove",       (VALUE (*)(...))AddMouseMove,       -1);
+  rb_define_singleton_method(mRug, "mousemoveoffset", (VALUE (*)(...))AddMouseMoveOffset, -1);
+  rb_define_singleton_method(mRug, "mousedown",       (VALUE (*)(...))AddMouseDown,       -1);
+  rb_define_singleton_method(mRug, "mouseup",         (VALUE (*)(...))AddMouseUp,         -1);
 
   VALUE mKeyModule = rb_define_module_under(mRug, "Key");
   VALUE mMouseModule = rb_define_module_under(mRug, "Mouse");
@@ -194,43 +209,48 @@ void LoadEvents(VALUE mRug){
   rb_define_const(mMouseModule, "Left",   INT2FIX(SDL_BUTTON_LEFT));
   rb_define_const(mMouseModule, "Middle", INT2FIX(SDL_BUTTON_MIDDLE));
   rb_define_const(mMouseModule, "Right",  INT2FIX(SDL_BUTTON_RIGHT));
-
-  RugEvents.KeyUp           = Qnil;
-  RugEvents.KeyDown         = Qnil;
-  RugEvents.MouseMove       = Qnil;
-  RugEvents.MouseDown       = Qnil;
-  RugEvents.MouseUp         = Qnil;
-  RugEvents.MouseMoveOffset = Qnil;
 }
 
 int HandleEvent(SDL_Event &ev){
   switch(ev.type){
   case SDL_KEYUP:
-    if (RugEvents.KeyUp != Qnil){
-      rb_funcall(RugEvents.KeyUp, rb_intern("call"), 1, INT2FIX(ev.key.keysym.sym));
+    for (EventIterator it = RugEvents.events[KEYUP].begin();
+         it != RugEvents.events[KEYUP].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 1, INT2FIX(ev.key.keysym.sym));
     }
     break;
   case SDL_KEYDOWN:
-    if (RugEvents.KeyDown != Qnil){
-      rb_funcall(RugEvents.KeyDown, rb_intern("call"), 1, INT2FIX(ev.key.keysym.sym));
+    for (EventIterator it = RugEvents.events[KEYDOWN].begin();
+         it != RugEvents.events[KEYDOWN].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 1, INT2FIX(ev.key.keysym.sym));
     }
     break;
   case SDL_MOUSEMOTION:
-    if (RugEvents.MouseMove != Qnil){
-      rb_funcall(RugEvents.MouseMove, rb_intern("call"), 2, INT2FIX(ev.motion.x), INT2FIX(ev.motion.y));
+    for (EventIterator it = RugEvents.events[MOUSEMOVE].begin();
+         it != RugEvents.events[MOUSEMOVE].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 2, INT2FIX(ev.motion.x), INT2FIX(ev.motion.y));
     }
-    if (RugEvents.MouseMoveOffset != Qnil){
-      rb_funcall(RugEvents.MouseMoveOffset, rb_intern("call"), 2, INT2FIX(ev.motion.xrel), INT2FIX(ev.motion.yrel));
+    for (EventIterator it = RugEvents.events[MOUSEMOVEOFFSET].begin();
+         it != RugEvents.events[MOUSEMOVEOFFSET].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 2, INT2FIX(ev.motion.xrel), INT2FIX(ev.motion.yrel));
     }
     break;
   case SDL_MOUSEBUTTONDOWN:
-    if (RugEvents.MouseDown != Qnil){
-      rb_funcall(RugEvents.MouseDown, rb_intern("call"), 3, INT2FIX(ev.button.x), INT2FIX(ev.button.y), INT2FIX(ev.button.button));
+    for (EventIterator it = RugEvents.events[MOUSEDOWN].begin();
+         it != RugEvents.events[MOUSEDOWN].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 3, INT2FIX(ev.button.x), INT2FIX(ev.button.y), INT2FIX(ev.button.button));
     }
     break;
   case SDL_MOUSEBUTTONUP:
-    if (RugEvents.MouseUp != Qnil){
-      rb_funcall(RugEvents.MouseUp, rb_intern("call"), 3, INT2FIX(ev.button.x), INT2FIX(ev.button.y), INT2FIX(ev.button.button));
+    for (EventIterator it = RugEvents.events[MOUSEUP].begin();
+         it != RugEvents.events[MOUSEUP].end();
+         it++){
+      rb_funcall(*it, rb_intern("call"), 3, INT2FIX(ev.button.x), INT2FIX(ev.button.y), INT2FIX(ev.button.button));
     }
     break;
   case SDL_QUIT:
