@@ -11,6 +11,7 @@ VALUE cRugGraphics;
 
 void SetGraphicsFunc(VALUE func){
   RugGraphics.renderFunc = func;
+  rb_iv_set(cRugGraphics, "@render_func", func); // Add reference for GC
 }
 
 void RenderGraphics(){

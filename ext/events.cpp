@@ -19,7 +19,13 @@ static const int NUM_EVENTS = 6;
 
 struct _RugEvents {
   list<VALUE> events[NUM_EVENTS];
+  VALUE mRug;
 } RugEvents;
+
+static void AddRugEvent(VALUE event){
+  VALUE stash = rb_iv_get(RugEvents.mRug, "@event_callbacks");
+  rb_funcall(stash, rb_intern("<<"), 1, event);
+}
 
 /*
  * Sets the function that will be called when a key is released. The
@@ -30,6 +36,7 @@ static VALUE AddKeyUp(int argc, VALUE * argv, VALUE self){
   VALUE keyup;
   rb_scan_args(argc, argv, "0&", &keyup);
   RugEvents.events[KEYUP].push_back(keyup);
+  AddRugEvent(keyup);
   return Qnil;
 }
 
@@ -42,6 +49,7 @@ static VALUE AddKeyDown(int argc, VALUE * argv, VALUE self){
   VALUE keydown;
   rb_scan_args(argc, argv, "0&", &keydown);
   RugEvents.events[KEYDOWN].push_back(keydown);
+  AddRugEvent(keydown);
   return Qnil;
 }
 
@@ -54,6 +62,7 @@ static VALUE AddMouseMove(int argc, VALUE * argv, VALUE self){
   VALUE mousemove;
   rb_scan_args(argc, argv, "0&", &mousemove);
   RugEvents.events[MOUSEMOVE].push_back(mousemove);
+  AddRugEvent(mousemove);
   return Qnil;
 }
 
@@ -66,6 +75,7 @@ static VALUE AddMouseDown(int argc, VALUE * argv, VALUE self){
   VALUE mousedown;
   rb_scan_args(argc, argv, "0&", &mousedown);
   RugEvents.events[MOUSEDOWN].push_back(mousedown);
+  AddRugEvent(mousedown);
   return Qnil;
 }
 
@@ -78,6 +88,7 @@ static VALUE AddMouseUp(int argc, VALUE * argv, VALUE self){
   VALUE mouseup;
   rb_scan_args(argc, argv, "0&", &mouseup);
   RugEvents.events[MOUSEUP].push_back(mouseup);
+  AddRugEvent(mouseup);
   return Qnil;
 }
 
@@ -90,6 +101,7 @@ static VALUE AddMouseMoveOffset(int argc, VALUE * argv, VALUE self){
   VALUE func;
   rb_scan_args(argc, argv, "0&", &func);
   RugEvents.events[MOUSEMOVEOFFSET].push_back(func);
+  AddRugEvent(func);
   return Qnil;
 }
 
@@ -103,6 +115,9 @@ void LoadEvents(VALUE mRug){
 
   VALUE mKeyModule = rb_define_module_under(mRug, "Key");
   VALUE mMouseModule = rb_define_module_under(mRug, "Mouse");
+
+  RugEvents.mRug = mRug;
+  rb_iv_set(mRug, "@event_callbacks", rb_ary_new());
 
   // Load character codes
   rb_define_const(mKeyModule, "Left",         INT2FIX(SDLK_LEFT));

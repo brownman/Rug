@@ -105,6 +105,10 @@ module Rug
           shape.overlap? self
         end
       end
+
+      # Circle uses centre for x, y instead of top-left
+      def x; body.x + @radius; end
+      def y; body.y + @radius; end
     end
 
     class Rectangle < Shape
@@ -129,7 +133,7 @@ module Rug
       def initialize
         # TODO: come up with a better data structure for objects
         @objects = Array.new
-        @gravity = 200.0
+        @gravity = -200.0
       end
 
       def << obj

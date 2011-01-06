@@ -17,6 +17,6 @@ module Rug
 
   class Image
     # this is added so that we can put images into the HasAnimation class
-    def update dt; end
+    def update; end
   end
 end

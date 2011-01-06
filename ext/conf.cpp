@@ -84,6 +84,14 @@ VALUE RugConfSetFPS(VALUE self, VALUE _fps){
 }
 
 /*
+ * Enables or disables the GUI layer.
+ */
+VALUE RugConfSetGUI(VALUE self, VALUE gui){
+  RugConf.gui = (gui == Qtrue ? true : false);
+  return gui;
+}
+
+/*
  * Sets the Rug configuration function. Requires a block to be
  * passed with any sort of configuration options set. This
  * block is executed within the context of a Rug::Conf object.
@@ -97,6 +105,7 @@ static VALUE RugConfFunc(int argc, VALUE * argv, VALUE klass){
     rb_scan_args(argc, argv, "0&", &confFunc);
     VALUE confObj = rb_funcall(cRugConf, rb_intern("new"), 0);
     rb_funcall(block_converter, rb_intern("call"), 3, confObj, rb_str_new2("instance_eval"), confFunc);
+    rb_iv_set(cRugConf, "@conf_func", confFunc);
   }
   return Qnil;
 }
@@ -117,6 +126,10 @@ SDL_Surface * DoConf(){
 
   SDL_ShowCursor(RugConf.show_cursor);
 
+  if (RugConf.gui){
+    rb_eval_string("Rug::GUI.load");
+  }
+
   // enable key repeating
   SDL_EnableKeyRepeat(RugConf.repeatDelay, RugConf.repeatInterval);
 
@@ -131,6 +144,8 @@ void LoadConf(VALUE mRug){
   RugConf.bpp            = 32;
   RugConf.frameGap       = 33;
   RugConf.fullscreen     = 0;
+  RugConf.show_cursor    = 1;
+  RugConf.gui            = 0;
   RugConf.repeatDelay    = SDL_DEFAULT_REPEAT_DELAY;
   RugConf.repeatInterval = SDL_DEFAULT_REPEAT_INTERVAL;
 
@@ -154,4 +169,5 @@ void LoadConf(VALUE mRug){
   rb_define_method(cRugConf, "show_cursor",         (VALUE (*)(...))RugConfSetShowCursor, 1);
   rb_define_method(cRugConf, "key_repeat_delay",    (VALUE (*)(...))RugConfSetDelay, 1);
   rb_define_method(cRugConf, "key_repeat_interval", (VALUE (*)(...))RugConfSetInterval, 1);
+  rb_define_method(cRugConf, "gui",                 (VALUE (*)(...))RugConfSetGUI, 1);
 }

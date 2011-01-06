@@ -3,11 +3,19 @@ require File.dirname(__FILE__) + '/../lib/Physics'
 include Rug
 include Rug::Physics
 
+class BodyWrapper
+  include Body
+
+  def initialize x, y, mass = 0.0
+    super x, y, 0.0, 0.0, mass
+  end
+end
+
 describe "Collision detection" do
   before :all do
-    @body1 = Body.new 0.0, 20, 20
-    @body2 = Body.new 0.0, 15, 15
-    @body3 = Body.new 0.0, 100, 100
+    @body1 = BodyWrapper.new 20, 20
+    @body2 = BodyWrapper.new 15, 15
+    @body3 = BodyWrapper.new 100, 100
 
     @rect = Rectangle.new 10, 10
     @body1.shape = @rect
@@ -51,25 +59,25 @@ describe "Collision detection" do
   end
 
   it "should overlap" do
-    @body1.overlap(@body2).should == true
+    @body1.overlap?(@body2).should == true
 
     # test intersection with bottom left
     @body2.y = 35
 
-    @body1.overlap(@body2).should == true
+    @body1.overlap?(@body2).should == true
   end
 
   it "should overlap - small circle" do
     # create a small circle near the rectangle, it should overlap
-    body = Body.new 0.0, 18, 25
+    body = BodyWrapper.new 18, 25, 0.0
     body.shape = Circle.new 4
 
-    @body1.overlap(body).should == true
+    @body1.overlap?(body).should == true
   end
 
   it "should not overlap" do
-    @body1.overlap(@body3).should_not == true
-    @body2.overlap(@body3).should_not == true
+    @body1.overlap?(@body3).should_not == true
+    @body2.overlap?(@body3).should_not == true
   end
 end
 
@@ -79,7 +87,7 @@ describe "Gravity" do
   end
 
   it "should move downward" do
-    body = Body.new 1.0, 0.0, 0.0
+    body = BodyWrapper.new 0.0, 0.0, 1.0
     @world << body
 
     # update by 1 second - initially since the body is at rest, it shouldn't move
@@ -99,7 +107,7 @@ describe "Gravity" do
 
   it "should not move" do
     # mass-less particles shouldn't move
-    body = Body.new 0.0, 0.0, 0.0
+    body = BodyWrapper.new 0.0, 0.0, 0.0
     @world << body
 
     @world.update 1000

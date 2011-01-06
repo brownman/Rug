@@ -27,6 +27,7 @@ static VALUE RugLoad(int argc, VALUE * argv, VALUE klass){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
     loadFunc = func;
+    rb_iv_set(mRug, "@load_func", func);
   }
   return Qnil;
 }
@@ -62,6 +63,7 @@ static VALUE RugUpdate(int argc, VALUE * argv, VALUE klass){
     VALUE func;
     rb_scan_args(argc, argv, "0&", &func);
     updateFunc = func;
+    rb_iv_set(mRug, "@update_func", func);
   }
   return Qnil;
 }
