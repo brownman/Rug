@@ -1,8 +1,5 @@
 require File.dirname(__FILE__) + "/../../lib/Rug"
 
-require 'rubygems'
-require 'ruby-debug'
-
 include Rug
 
 BALL_RADIUS   = 5
@@ -29,6 +26,7 @@ class Paddle < AnimatedBody
     case other
     when :top, :bottom
       @vy = 0
+      revert_position
     end
   end
 end
