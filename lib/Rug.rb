@@ -10,6 +10,10 @@ module Rug
     include Rug::Physics::Body
     include Rug::HasAnimation
 
+    def initialize x = 0.0, y = 0.0, vx = 0.0, vy = 0.0, mass = 0.0
+      super x, y, vx, vy, mass
+    end
+
     def update dt
       update_body dt
       update_animation dt

@@ -90,6 +90,7 @@ module Rug
       end
       def x; body.x; end
       def y; body.y; end
+      def check_edge; nil; end
     end
 
     class Circle < Shape
@@ -109,6 +110,20 @@ module Rug
       # Circle uses centre for x, y instead of top-left
       def x; body.x + @radius; end
       def y; body.y + @radius; end
+
+      def check_edge
+        if body.x < 0
+          :left
+        elsif body.x + @radius * 2 >= Rug.width
+          :right
+        elsif body.y < 0
+          :top
+        elsif body.y + @radius * 2 >= Rug.height
+          :bottom
+        else
+          nil
+        end
+      end
     end
 
     class Rectangle < Shape
@@ -125,15 +140,30 @@ module Rug
           shape.overlap? self
         end
       end
+
+      def check_edge
+        if body.x < 0
+          :left
+        elsif body.x + @w >= Rug.width
+          :right
+        elsif body.y < 0
+          :top
+        elsif body.y + @h >= Rug.height
+          :bottom
+        else
+          nil
+        end
+      end
     end
 
     class World
-      attr_accessor :gravity
+      attr_accessor :gravity, :collide_with_window
 
       def initialize
-        # TODO: come up with a better data structure for objects
+        # TODO: use a better data structure for objects like a quadtree
         @objects = Array.new
-        @gravity = -200.0
+        @gravity = 200.0
+        @collide_with_window = true
       end
 
       def << obj
@@ -145,7 +175,7 @@ module Rug
         @objects.each do |obj|
           obj.update dt
 
-          obj.apply_force 0, -@gravity * obj.mass * dt / 1000.0
+          obj.apply_force 0, @gravity * obj.mass * dt / 1000.0
         end
       end
 
@@ -153,16 +183,17 @@ module Rug
         @objects.each &b
       end
 
-      def collision? which
+      def check_for_collision which
         obj = @objects.find do |o|
           o != which and o.overlap? which
         end
 
         if obj
-          which.collide obj
           obj.collide which
-        else
-          false
+          which.collide obj
+        elsif @collide_with_window
+          edge = which.shape.check_edge
+          which.collide edge if edge
         end
       end
 
@@ -179,13 +210,11 @@ module Rug
       end
 
       def update_body dt
-        x, y = @x, @y
+        @last_x, @last_y = @x, @y
         @x += @vx * dt / 1000.0
         @y += @vy * dt / 1000.0
 
-        if @world.collision? self
-          @x, @y = x, y
-        end
+        @world.check_for_collision self
       end
 
       def apply_force fx, fy
@@ -208,14 +237,16 @@ module Rug
       end
 
       def collide other
-        # TODO: don't completely stop, but stop in the direction that the object is blocked
-        true
       end
 
       # This is typically overidden by classes that include this module,
       # but put it here anyway
       def update dt
         update_body dt
+      end
+
+      def revert_position
+        @x, @y = @last_x, @last_y
       end
     end
   end

@@ -8,8 +8,8 @@ include Rug
 BALL_RADIUS   = 5
 PADDLE_HEIGHT = 100
 PADDLE_WIDTH  = 10
-BALL_SPEED    = 130
-PADDLE_SPEED  = 100
+BALL_SPEED    = 250
+PADDLE_SPEED  = 200
 
 class Paddle < AnimatedBody
   def initialize x, y
@@ -23,12 +23,20 @@ class Paddle < AnimatedBody
     @animation.back_colour = Colour::White
     @animation.fill_rect 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT
   end
+
+  def collide other
+    # Stop the paddles when they bump into the top or the bottom.
+    case other
+    when :top, :bottom
+      @vy = 0
+    end
+  end
 end
 
 class Ball < AnimatedBody
-  def initialize x, y, vx, vy
-    super x, y, vx, vy, 0.0
-
+  def initialize
+    super()
+    reset
     self.shape = Physics::Circle.new BALL_RADIUS
     @animation = Image.new BALL_RADIUS * 2, BALL_RADIUS * 2
     @animation.back_colour = Colour::White
@@ -36,7 +44,31 @@ class Ball < AnimatedBody
   end
 
   def collide other
-    @vx = -@vx
+    # This method is called when the ball bumps into something.
+    # By default Rug sends :top, :bottom, :left or :right when
+    # the object contacts the edge of the screen.
+    case other
+    when :top, :bottom
+      @vy = -@vy
+      revert_position
+    when :left
+      $score2 += 1
+      reset
+    when :right
+      $score1 += 1
+      reset
+    else
+      # Hit something else, which is a paddle
+      @vx = -@vx
+      revert_position
+    end
+  end
+
+  def reset
+    self.x = Rug.width / 2
+    self.y = Rug.height / 2
+    self.vx = rand < 0.5 ? -BALL_SPEED : BALL_SPEED
+    self.vy = (rand - 0.5) * BALL_SPEED
   end
 end
 
@@ -50,7 +82,7 @@ Rug.load do
   $paddle1 = Paddle.new 10, (Rug.height - PADDLE_HEIGHT) / 2
   $paddle2 = Paddle.new Rug.width - PADDLE_WIDTH - 10, (Rug.height - PADDLE_HEIGHT) / 2
 
-  $ball = Ball.new Rug.width / 2, Rug.height / 2, BALL_SPEED, 0.0
+  $ball = Ball.new
 
   $world << $paddle1 << $paddle2 << $ball
 
