@@ -1,6 +1,7 @@
 #include "conf.h"
 
 #include <SDL/SDL.h>
+#include <SDL/SDL_image.h>
 
 _RugConf RugConf;
 VALUE cRugConf;
@@ -92,6 +93,14 @@ VALUE RugConfSetGUI(VALUE self, VALUE gui){
 }
 
 /*
+ * Sets the background image.
+ */
+VALUE RugConfSetBackground(VALUE self, VALUE filename){
+  RugConf.background = IMG_Load(STR2CSTR(filename));
+  return filename;
+}
+
+/*
  * Sets the Rug configuration function. Requires a block to be
  * passed with any sort of configuration options set. This
  * block is executed within the context of a Rug::Conf object.
@@ -145,9 +154,10 @@ void LoadConf(VALUE mRug){
   RugConf.frameGap       = 33;
   RugConf.fullscreen     = 0;
   RugConf.show_cursor    = 1;
-  RugConf.gui            = 0;
+  RugConf.gui            = 1;
   RugConf.repeatDelay    = SDL_DEFAULT_REPEAT_DELAY;
   RugConf.repeatInterval = SDL_DEFAULT_REPEAT_INTERVAL;
+  RugConf.background     = NULL;
 
   block_converter = rb_eval_string("proc { |recv, msg, block| recv.send(msg, &block) }");
 
@@ -170,4 +180,5 @@ void LoadConf(VALUE mRug){
   rb_define_method(cRugConf, "key_repeat_delay",    (VALUE (*)(...))RugConfSetDelay, 1);
   rb_define_method(cRugConf, "key_repeat_interval", (VALUE (*)(...))RugConfSetInterval, 1);
   rb_define_method(cRugConf, "gui",                 (VALUE (*)(...))RugConfSetGUI, 1);
+  rb_define_method(cRugConf, "background",          (VALUE (*)(...))RugConfSetBackground, 1);
 }

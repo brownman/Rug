@@ -10,6 +10,7 @@ typedef struct {
   int repeatDelay, repeatInterval;
   int frameGap;
   bool fullscreen, show_cursor, gui;
+  SDL_Surface * background;
 } _RugConf;
 
 void LoadConf(VALUE);

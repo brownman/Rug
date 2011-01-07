@@ -1,9 +1,11 @@
 #include "graphics.h"
+#include "conf.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 
 extern SDL_Surface * mainWnd;
+extern _RugConf RugConf;
 
 _RugGraphics RugGraphics;
 extern VALUE block_converter;
@@ -15,6 +17,10 @@ void SetGraphicsFunc(VALUE func){
 }
 
 void RenderGraphics(){
+  if (RugConf.background != NULL){
+    SDL_BlitSurface(RugConf.background, NULL, mainWnd, NULL);
+  }
+
   if (RugGraphics.renderFunc != Qnil){
     rb_funcall(block_converter, rb_intern("call"), 3, RugGraphics.graphicsObj, rb_str_new2("instance_eval"), RugGraphics.renderFunc);
   }
