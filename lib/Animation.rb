@@ -80,5 +80,13 @@ module Rug
       img.draw x, y, @current_frameset.frame_width, img.height,
         @current_frameset.frame_width * @current_frame, 0, layer
     end
+
+    def width
+      @current_frameset.frame_width
+    end
+
+    def height
+      @current_frameset.height
+    end
   end
 end

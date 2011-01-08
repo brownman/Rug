@@ -1,7 +1,7 @@
 module Rug
   module HasAnimation
-    def draw layer = nil
-      @animation.draw @x, @y, layer
+    def draw x_offset = 0.0, y_offset = 0.0, layer = nil, &custom_render
+      @animation.draw @x + x_offset, @y + y_offset, layer, &custom_render
     end
 
     def update_animation dt

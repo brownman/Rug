@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/Colour'
 require File.dirname(__FILE__) + '/HasAnimation'
 require File.dirname(__FILE__) + '/Physics'
 require File.dirname(__FILE__) + '/Gui'
+require File.dirname(__FILE__) + '/Views'
 
 module Rug
   class AnimatedBody

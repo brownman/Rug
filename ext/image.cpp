@@ -45,7 +45,9 @@ static VALUE new_image(int argc, VALUE * argv, VALUE klass){
 
     if (!image){
       // throw exception
-      rb_raise(rb_eIOError, "Unable to load image!");
+      char buffer[1024];
+      snprintf(buffer, 1024, "Unable to load image: %s", STR2CSTR(filename));
+      rb_raise(rb_eIOError, buffer);
     }else{
       RugImage * rImage = ALLOC(RugImage);
 

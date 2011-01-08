@@ -124,6 +124,9 @@ module Rug
           nil
         end
       end
+
+      def width; @radius * 2; end
+      def height; @radius * 2; end
     end
 
     class Rectangle < Shape
@@ -154,6 +157,9 @@ module Rug
           nil
         end
       end
+
+      def width; @w; end
+      def height; @h; end
     end
 
     class World
@@ -228,6 +234,14 @@ module Rug
         @shape = shape
       end
 
+      def width
+        @shape.width
+      end
+
+      def height
+        @shape.height
+      end
+
       def overlap? body
         if @shape and body.shape
           @shape.overlap? body.shape
@@ -245,8 +259,18 @@ module Rug
         update_body dt
       end
 
-      def revert_position
-        @x, @y = @last_x, @last_y
+      def revert_position which = nil
+        # TODO: right now this just moves the object back to where it was, but for
+        # high velocities this causes the object to stop a visible distance from
+        # the other object - need to have a "partial" movement
+        case which
+        when :x
+          @x = @last_x
+        when :y
+          @y = @last_y
+        else
+          @x, @y = @last_x, @last_y
+        end
       end
     end
   end
